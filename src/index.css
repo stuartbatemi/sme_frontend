@@ -1,0 +1,322 @@
+/* ============================================================
+   SME ADVISOR — Global Styles
+   Themes: grey (default), light, dark — via CSS variables
+   Fonts: DM Serif Display (headings) + Plus Jakarta Sans (body)
+   ============================================================ */
+
+:root {
+  /* Brand colours — constant across all themes */
+  --clr-primary:      #0D6E6E;
+  --clr-primary-dark: #084F4F;
+  --clr-primary-lt:   #E6F4F4;
+  --clr-accent:       #E8A838;
+  --clr-accent-lt:    #FDF3DC;
+  --clr-success:      #16A34A;
+  --clr-success-lt:   #DCFCE7;
+  --clr-warning:      #D97706;
+  --clr-warning-lt:   #FEF3C7;
+  --clr-danger:       #DC2626;
+  --clr-danger-lt:    #FEE2E2;
+
+  /* Theme tokens — overridden by ThemeContext.jsx per theme */
+  --clr-bg:      #F0F0F0;
+  --clr-bg-2:    #E4E4E4;
+  --clr-card:    #F7F7F7;
+  --clr-border:  #D1D1D1;
+  --clr-text:    #1A1A1A;
+  --clr-text-2:  #4A4A4A;
+  --clr-text-3:  #888888;
+  --clr-navbar:  rgba(240,240,240,0.95);
+  --shadow-sm:   0 1px 4px rgba(0,0,0,0.10);
+  --shadow-md:   0 4px 16px rgba(0,0,0,0.12);
+  --shadow-lg:   0 8px 32px rgba(0,0,0,0.16);
+
+  /* Typography */
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-wordmark: 'Fraunces', 'DM Serif Display', Georgia, serif;
+
+  /* ── Navbar clay-glass surface ──────────────────────────────────
+     A fused claymorphic + glassmorphic surface: a soft, slightly
+     desaturated "clay" base, frosted with blur, carrying an inset
+     highlight (clay) plus an outer soft shadow (clay) and a hairline
+     edge (glass). Defaults to a dark clay tone (grey/dark themes);
+     [data-theme="light"] below softens it so it doesn't fight a
+     white page. */
+  --navbar-clay-bg:      rgba(58, 60, 66, 0.62);
+  --navbar-clay-bg-soft: rgba(58, 60, 66, 0.40);
+  --navbar-clay-edge:    rgba(255, 255, 255, 0.10);
+  --navbar-clay-inset:   inset 0 1px 1px rgba(255,255,255,0.14),
+                          inset 0 -6px 14px rgba(0,0,0,0.22);
+  --navbar-clay-shadow:  0 10px 30px rgba(20,20,24,0.28),
+                          0 2px 8px rgba(20,20,24,0.18);
+  --navbar-ink:          #F3F2EF;
+  --navbar-ink-dim:      rgba(243,242,239,0.62);
+  --navbar-accent:       #E8A838;
+
+  /* Spacing */
+  --space-1:  4px;  --space-2:  8px;  --space-3:  12px;
+  --space-4:  16px; --space-5:  20px; --space-6:  24px;
+  --space-8:  32px; --space-10: 40px; --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radius */
+  --radius-sm: 6px; --radius-md: 12px;
+  --radius-lg: 20px; --radius-xl: 28px;
+
+  /* Transition */
+  --transition: 180ms ease;
+}
+
+/* Dark theme overrides for elements that need explicit dark treatment */
+[data-theme="dark"] {
+  --clr-primary-lt: rgba(13,110,110,0.20);
+  --clr-accent-lt:  rgba(232,168,56,0.18);
+  --clr-success-lt: rgba(22,163,74,0.18);
+  --clr-warning-lt: rgba(217,119,6,0.18);
+  --clr-danger-lt:  rgba(220,38,38,0.18);
+}
+
+/* Light theme: warm + lighten the clay-glass navbar so it sits
+   naturally on a white page instead of reading as a dark patch. */
+[data-theme="light"] {
+  --navbar-clay-bg:      rgba(120, 116, 108, 0.30);
+  --navbar-clay-bg-soft: rgba(120, 116, 108, 0.16);
+  --navbar-clay-edge:    rgba(255, 255, 255, 0.55);
+  --navbar-clay-inset:   inset 0 1px 1px rgba(255,255,255,0.65),
+                          inset 0 -6px 14px rgba(60,55,45,0.07);
+  --navbar-clay-shadow:  0 10px 26px rgba(60,55,45,0.10),
+                          0 2px 8px rgba(60,55,45,0.08);
+  --navbar-ink:          #2B2A27;
+  --navbar-ink-dim:      rgba(43,42,39,0.58);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--clr-text);
+  background: var(--clr-bg);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.2; }
+h4, h5, h6 { font-family: var(--font-body); font-weight: 700; }
+a { color: var(--clr-primary); text-decoration: none; }
+a:hover { text-decoration: underline; }
+img { max-width: 100%; display: block; }
+button { cursor: pointer; font-family: var(--font-body); }
+input, select, textarea { font-family: var(--font-body); font-size: 1rem; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--clr-bg); }
+::-webkit-scrollbar-thumb { background: var(--clr-border); border-radius: 99px; }
+
+/* Layout */
+.container {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .container { padding: 0 var(--space-4); }
+  .hide-mobile { display: none !important; }
+}
+@media (max-width: 768px) {
+  .hide-tablet { display: none !important; }
+}
+
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.animate-fadeUp { animation: fadeUp 0.35s ease both; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); border: 0;
+}
+
+/* Responsive grid helpers */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--space-4); }
+.grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-4); }
+
+@media (max-width: 640px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Mobile navbar hamburger ── */
+@media (max-width: 640px) {
+  .mobile-menu-btn { display: flex !important; }
+}
+@media (min-width: 641px) {
+  .mobile-menu-btn { display: none !important; }
+  .hide-mobile { display: initial !important; }
+}
+
+/* ── Responsive form grids ── */
+@media (max-width: 480px) {
+  .grid-2 { grid-template-columns: 1fr !important; }
+}
+
+/* ============================================================
+   ORin. — Clay-glass navbar
+   ============================================================ */
+.orin-navbar-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding: 14px var(--space-4) 0;
+}
+
+.orin-navbar {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  height: 60px;
+  padding: 0 8px 0 8px;
+  border-radius: 999px;
+  background: var(--navbar-clay-bg);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--navbar-clay-edge);
+  box-shadow: var(--navbar-clay-shadow), var(--navbar-clay-inset);
+  transition: box-shadow 0.25s ease;
+}
+
+.orin-icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--navbar-clay-edge);
+  background: var(--navbar-clay-bg-soft);
+  color: var(--navbar-ink);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.12), inset 0 -3px 8px rgba(0,0,0,0.18);
+}
+.orin-icon-btn:hover {
+  background: rgba(255,255,255,0.10);
+}
+.orin-icon-btn:active {
+  transform: scale(0.92);
+}
+
+.orin-wordmark {
+  font-family: var(--font-wordmark);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--navbar-ink);
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  text-decoration: none;
+  user-select: none;
+  white-space: nowrap;
+}
+.orin-wordmark .dot {
+  color: var(--navbar-accent);
+}
+
+.orin-pill-btn {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--navbar-clay-edge);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+.orin-pill-btn:active { transform: scale(0.96); }
+
+.orin-pill-btn.ghost {
+  background: transparent;
+  color: var(--navbar-ink-dim);
+}
+.orin-pill-btn.ghost:hover {
+  background: rgba(255,255,255,0.08);
+  color: var(--navbar-ink);
+}
+
+.orin-pill-btn.solid {
+  background: var(--navbar-accent);
+  border-color: var(--navbar-accent);
+  color: #2A2200;
+  box-shadow: 0 4px 14px rgba(232,168,56,0.35);
+}
+.orin-pill-btn.solid:hover {
+  filter: brightness(1.06);
+}
+
+/* Drawer overlay (hamburger menu) */
+.orin-drawer-scrim {
+  position: fixed; inset: 0; z-index: 199;
+  background: rgba(10,10,12,0.42);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  animation: orinFadeIn 0.18s ease both;
+}
+.orin-drawer {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+  width: min(78vw, 300px);
+  background: var(--navbar-clay-bg);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  backdrop-filter: blur(22px) saturate(150%);
+  border-right: 1px solid var(--navbar-clay-edge);
+  box-shadow: var(--navbar-clay-shadow);
+  padding: var(--space-6) var(--space-5);
+  display: flex; flex-direction: column; gap: var(--space-2);
+  animation: orinSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes orinFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes orinSlideIn {
+  from { transform: translateX(-100%); opacity: 0.6; }
+  to   { transform: translateX(0); opacity: 1; }
+}
+
+.orin-drawer-link {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 15.5px;
+  color: var(--navbar-ink);
+  padding: 12px 10px;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.orin-drawer-link:hover {
+  background: rgba(255,255,255,0.08);
+}
+.orin-drawer-link.active {
+  background: rgba(255,255,255,0.10);
+  color: var(--navbar-accent);
+}
