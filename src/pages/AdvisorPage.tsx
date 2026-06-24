@@ -85,8 +85,8 @@ export default function AdvisorPage() {
         .slice(0, 8)
       setMatches(scored)
       if (!scored.length) setError('No matches found. Try simpler words like "food", "clothes", "repair".')
-    } catch {
-      setError('Could not reach the model server. Make sure it is running on port 8000.')
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.response?.data?.detail || 'Could not reach the model server. Make sure it is running on port 8000.')
     } finally { setSearching(false) }
   }
 
