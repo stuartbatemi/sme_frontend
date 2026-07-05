@@ -208,8 +208,6 @@ export default function AdvisorPage() {
               onClick={() => { set('path_type','A'); setStep(1) }}
               className="animate-fadeUp"
               style={{ animationDelay: '80ms' }}
-              labelClassName="animate-fadeUp"
-              labelStyle={{ animationDelay: '260ms' }}
             />
             <PathCard
               variant="static"
@@ -219,8 +217,6 @@ export default function AdvisorPage() {
               onClick={() => { set('path_type','B'); setStep(1) }}
               className="animate-fadeUp"
               style={{ animationDelay: '200ms' }}
-              labelClassName="animate-fadeUp"
-              labelStyle={{ animationDelay: '380ms' }}
             />
           </div>
         </div>
