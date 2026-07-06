@@ -258,10 +258,6 @@ export default function AdvisorPage() {
             />
           )}
 
-          {user && (
-            <Alert type="info" message={`Using your profile details: age ${user.age || 'not set'}, gender ${user.gender || 'not set'}.`} />
-          )}
-
           <Button variant="primary" fullWidth disabled={!form.district || !!capError} onClick={goFromLocation}>
             {form.path_type === 'A' ? 'Continue →' : (user ? 'Get Recommendations →' : 'Continue →')}
           </Button>
