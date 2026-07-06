@@ -208,6 +208,8 @@ export default function AdvisorPage() {
               onClick={() => { set('path_type','A'); setStep(1) }}
               className="animate-fadeUp"
               style={{ animationDelay: '80ms' }}
+              labelClassName="animate-fadeUp"
+              labelStyle={{ animationDelay: '260ms' }}
             />
             <PathCard
               variant="static"
@@ -217,6 +219,8 @@ export default function AdvisorPage() {
               onClick={() => { set('path_type','B'); setStep(1) }}
               className="animate-fadeUp"
               style={{ animationDelay: '200ms' }}
+              labelClassName="animate-fadeUp"
+              labelStyle={{ animationDelay: '380ms' }}
             />
           </div>
         </div>
@@ -255,7 +259,7 @@ export default function AdvisorPage() {
           )}
 
           {user && (
-            <Alert type="info" message={`Using your profile details: age ${user.age || 'not set'}, gender ${user.gender || 'not set'}. Update these in your Dashboard profile.`} />
+            <Alert type="info" message={`Using your profile details: age ${user.age || 'not set'}, gender ${user.gender || 'not set'}.`} />
           )}
 
           <Button variant="primary" fullWidth disabled={!form.district || !!capError} onClick={goFromLocation}>
@@ -427,47 +431,6 @@ function PathAResult({ result, activityLabel }: { result: any, activityLabel: st
         <Card style={{ background:'var(--clr-warning-lt)', border:'1px solid var(--clr-warning)' }}>
           {result.warnings.map((w: string, i: number) => <p key={i} style={{ fontSize:'14px', color:'var(--clr-warning)' }}>⚠ {w}</p>)}
         </Card>
-      )}
-
-      {result.alternatives?.length > 0 && (
-        <div style={{ display:'flex', flexDirection:'column', gap:'var(--space-3)', marginTop:'var(--space-2)' }}>
-          <div style={{ borderTop:'1px solid var(--clr-border)', paddingTop:'var(--space-5)' }}>
-            <h3 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1.1rem,2.5vw,1.35rem)', marginBottom:'var(--space-1)' }}>
-              Better alternatives for your area
-            </h3>
-            <p style={{ fontSize:'13px', color:'var(--clr-text-2)', marginBottom:'var(--space-4)' }}>
-              Based on your location and budget, these businesses have a higher chance of success:
-            </p>
-          </div>
-          {result.alternatives.map((rec: any, i: number) => (
-            <Card key={i} style={{ borderLeft:'4px solid var(--clr-primary)' }}>
-              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'var(--space-3)', flexWrap:'wrap', gap:8 }}>
-                <div style={{ flex:1, minWidth:0 }}>
-                  <span style={{ fontSize:'11px', fontWeight:700, color:'var(--clr-text-3)' }}>#{i+1}</span>
-                  <h4 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1rem,2.5vw,1.1rem)', margin:'2px 0', wordBreak:'break-word' }}>{rec.activity}</h4>
-                  <span style={{ fontSize:'13px', color:'var(--clr-text-2)' }}>{rec.sector}</span>
-                </div>
-                <Badge label={rec.success_chance} />
-              </div>
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(120px,1fr))', gap:'var(--space-2)' }}>
-                {[
-                  ['Capital',        `TZS ${fmt(rec.startup_capital_tzs)}`],
-                  ['Monthly Profit', `TZS ${fmt(rec.expected_monthly_profit_tzs)}`],
-                  ['ROI / year',     `${rec.roi_percent_per_year}%`],
-                  ['Break-even',     `${rec.breakeven_months} mo`],
-                ].map(([l, v]) => (
-                  <div key={l} style={{ background:'var(--clr-bg)', borderRadius:'var(--radius-sm)', padding:'10px 12px' }}>
-                    <div style={{ fontSize:'10px', color:'var(--clr-text-3)', fontWeight:700, letterSpacing:'.3px' }}>{l.toUpperCase()}</div>
-                    <div style={{ fontWeight:700, fontSize:'14px', color:'var(--clr-text)', marginTop:2 }}>{v}</div>
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize:'12px', color:'var(--clr-text-3)', marginTop:'var(--space-3)' }}>
-                {rec.existing_similar_businesses_in_area} similar businesses nearby
-              </p>
-            </Card>
-          ))}
-        </div>
       )}
     </div>
   )
