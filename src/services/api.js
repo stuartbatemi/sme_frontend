@@ -57,6 +57,18 @@ export const advisoryAPI = {
   history: (page = 1, limit = 10) =>
     node.get(`/advisory/history?page=${page}&limit=${limit}`),
   getSession: (id) => node.get(`/advisory/history/${id}`),
+  experienceSearch: (q) =>
+    node.get('/advisory/experience-search', q ? { params: { q } } : {}),
+}
+
+// ── AI Consultant (Groq-backed "why this will/won't work" explainer) ─
+export const consultantAPI = {
+  analyze: (payload) => node.post('/consultant/analyze', payload),
+}
+
+// ── Microfinance (loan-path reference list) ─────────────────────────
+export const microfinanceAPI = {
+  list: (riskTier) => node.get('/microfinance', { params: { risk_tier: riskTier } }),
 }
 
 // ── User ──────────────────────────────────────────────────────────

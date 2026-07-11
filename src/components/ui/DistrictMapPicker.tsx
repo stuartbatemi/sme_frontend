@@ -6,28 +6,65 @@ import React, { useEffect, useRef, useState, useCallback } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-// ── Ward data (NBS Tanzania) ──────────────────────────────────────
+// ── Ward data (corrected — Ilala CBD split verified against official
+// admin divisions; ward count now matches source-of-truth used by the
+// backend/model, not the old placeholder list) ─────────────────────
+import darAdminDivisions from '../../data/dar_admin_divisions.json'
+
+// The map still shows 5 clickable regions (no GIS boundary file exists
+// for Ilala CBD as its own shape), but wards are the FULL correct set —
+// Ilala CBD wards are included under the 'Ilala' map region for display,
+// then silently corrected to the true district when picked (see
+// WARD_TO_TRUE_DISTRICT below). This keeps what gets sent to the
+// backend/model accurate even though the map shape doesn't visually split.
 const WARD_DATA: Record<string, string[]> = {
-  Kinondoni: [
-    'Bunju', 'Goba', 'Kawe', 'Kibamba', 'Kimara', 'Kinondoni', 'Kunduchi',
-    'Kwembe', 'Makongo', 'Makuburi', 'Manzese', 'Mbweni', 'Mburahati',
-    'Mikocheni', 'Mwananyamala', 'Mwananyamala-Kaskazi', 'Ndugumbi',
-    'Oysterbay', 'Regent Estate', 'Sinza', 'Tandale', 'Ubungo-Kibangu', 'Ukonga-Kimara',
-  ],
-  Ilala: [
-    'Buguruni', "Chang'ombe", 'Gerezani', 'Ilala', 'Jangwani', 'Kariakoo',
-    'Kinondoni-Msasani', 'Kivukoni', 'Kigogo', 'Kurasini', 'Mchafukoge',
-    'Msasani', 'Mtoni', 'Posta', 'Segerea', 'Tabata', 'Ukonga',
-    'Upanga Magharibi', 'Upanga Mashariki', 'Vingunguti',
-  ],
-  Temeke: [
-    'Azimio', 'Chamazi', "Chang'ombe", 'Charambe', 'Keko', 'Kibada',
-    'Kigamboni', 'Kijichi', 'Kimanga', 'Kinyerezi', 'Kurasini',
-    'Makangarawe', 'Mbagala', 'Mbagala Kuu', 'Miburani', 'Mjimwema',
-    'Mtoni', 'Pembamoto', 'Sandali', 'Stawisha', 'Temeke', 'Toangoma', 'Yombo Vituka',
-  ],
-  Ubungo: ['Goba', 'Kibamba', 'Kimara', 'Makongo', 'Mbezi', 'Msigani', 'Saranga', 'Ubungo'],
-  Kigamboni: ['Kigamboni', 'Kimbiji', 'Kisarawe II', 'Mjimwema', 'Somangira', 'Tungi'],
+  "Ilala": ["Bonyokwa", "Buguruni", "Buyuni", "Chanika", "Gerezani", "Gongo la Mboto", "Ilala", "Jangwani", "Kariakoo", "Kimanga", "Kinyerezi", "Kipawa", "Kipunguni", "Kisukulu", "Kisutu", "Kitunda", "Kivukoni", "Kivule", "Kiwalani", "Liwiti", "Majohe", "Mchafukoge", "Mchikichini", "Minazi Mirefu", "Mnyamani", "Msongola", "Mzinga", "Pugu", "Pugu Station", "Segerea", "Tabata", "Ukonga", "Upanga Magharibi", "Upanga Mashariki", "Vingunguti", "Zingiziwa"],
+  "Kigamboni": ["Kibada", "Kigamboni", "Kimbiji", "Kisarawe II", "Mjimwema", "Pembamnazi", "Somangila", "Tungi", "Vijibweni"],
+  "Kinondoni": ["Bunju", "Hananasif", "Kawe", "Kigogo", "Kijitonyama", "Kinondoni", "Kunduchi", "Mabwepande", "Magomeni", "Makongo", "Makumbusho", "Mbezi Juu", "Mbweni", "Mikocheni", "Msasani", "Mwananyamala", "Mzimuni", "Ndugumbi", "Tandale", "Wazo"],
+  "Temeke": ["Azimio", "Buza", "Chamazi", "Chang'ombe", "Charambe", "Keko", "Kibondemaji", "Kiburugwa", "Kijichi", "Kilakala", "Kilungule", "Kurasini", "Makangarawe", "Mbagala", "Mbagala Kuu", "Mianzini", "Miburani", "Mtoni", "Sandali", "Tandika", "Temeke", "Toangoma", "Yombo Vituka"],
+  "Ubungo": ["Goba", "Kibamba", "Kimara", "Kwembe", "Mabibo", "Makuburi", "Makurumla", "Manzese", "Mbezi", "Mburahati", "Msigani", "Saranga", "Sinza", "Ubungo"],
+}
+
+// Ward -> the district value that actually gets sent to the backend.
+// Only wards that differ from their map region need an entry here
+// (i.e. Ilala CBD wards, which visually sit under the 'Ilala' region).
+const WARD_TO_TRUE_DISTRICT: Record<string, string> = {
+  "Bonyokwa": "Ilala",
+  "Buguruni": "Ilala",
+  "Buyuni": "Ilala",
+  "Chanika": "Ilala",
+  "Gerezani": "Ilala CBD",
+  "Gongo la Mboto": "Ilala",
+  "Ilala": "Ilala",
+  "Jangwani": "Ilala CBD",
+  "Kariakoo": "Ilala CBD",
+  "Kimanga": "Ilala",
+  "Kinyerezi": "Ilala",
+  "Kipawa": "Ilala",
+  "Kipunguni": "Ilala",
+  "Kisukulu": "Ilala",
+  "Kisutu": "Ilala CBD",
+  "Kitunda": "Ilala",
+  "Kivukoni": "Ilala CBD",
+  "Kivule": "Ilala",
+  "Kiwalani": "Ilala",
+  "Liwiti": "Ilala",
+  "Majohe": "Ilala",
+  "Mchafukoge": "Ilala CBD",
+  "Mchikichini": "Ilala CBD",
+  "Minazi Mirefu": "Ilala",
+  "Mnyamani": "Ilala",
+  "Msongola": "Ilala",
+  "Mzinga": "Ilala",
+  "Pugu": "Ilala",
+  "Pugu Station": "Ilala",
+  "Segerea": "Ilala",
+  "Tabata": "Ilala",
+  "Ukonga": "Ilala",
+  "Upanga Magharibi": "Ilala CBD",
+  "Upanga Mashariki": "Ilala CBD",
+  "Vingunguti": "Ilala",
+  "Zingiziwa": "Ilala",
 }
 
 // Approximate map centres per district (for fly-to)
@@ -115,7 +152,7 @@ export default function DistrictMapPicker({
           onEachFeature: (_feat, fl) => {
             fl.on('mouseover', () => {
               hovered.current = canonical
-              if (district !== canonical) (fl as L.Path).setStyle(HOVER_STYLE)
+              if (mapRegion !== canonical) (fl as L.Path).setStyle(HOVER_STYLE)
             })
             fl.on('mouseout', () => {
               hovered.current = null
@@ -150,16 +187,21 @@ export default function DistrictMapPicker({
     })
   }, [])
 
-  // Re-apply styles whenever district prop changes (e.g. reset from parent)
+  // 'Ilala CBD' has no separate map shape — treat it as the 'Ilala'
+  // region for map highlighting, fly-to, and ward-list lookup, while
+  // still sending the correct true district value to the backend.
+  const mapRegion = district === 'Ilala CBD' ? 'Ilala' : district
+
+  // Re-apply styles whenever the map region changes (e.g. reset from parent)
   useEffect(() => {
     if (!mapReady) return
-    applyAllStyles(district)
-    if (district && DISTRICT_CENTERS[district]) {
-      mapObj.current?.flyTo(DISTRICT_CENTERS[district], 12, { duration: 0.9 })
-    } else if (!district) {
+    applyAllStyles(mapRegion)
+    if (mapRegion && DISTRICT_CENTERS[mapRegion]) {
+      mapObj.current?.flyTo(DISTRICT_CENTERS[mapRegion], 12, { duration: 0.9 })
+    } else if (!mapRegion) {
       mapObj.current?.flyTo([-6.87, 39.24], 10, { duration: 0.7 })
     }
-  }, [district, mapReady, applyAllStyles])
+  }, [mapRegion, mapReady, applyAllStyles])
 
   // ── District click ────────────────────────────────────────────────
   function handleDistrictClick(name: string) {
@@ -170,14 +212,29 @@ export default function DistrictMapPicker({
   }
 
   // ── Ward list ─────────────────────────────────────────────────────
-  const wardList = district ? WARD_DATA[district] ?? [] : []
+  const wardList = mapRegion ? WARD_DATA[mapRegion] ?? [] : []
   const filteredWards = wardSearch.trim()
     ? wardList.filter(w => w.toLowerCase().includes(wardSearch.toLowerCase()))
     : wardList
 
   const pickWard = (w: string) => {
-    onWardChange(w === ward ? '' : w)
+    if (w === ward) {
+      onWardChange('')
+      return
+    }
+    onWardChange(w)
+    // Silently correct the district to the TRUE district for this ward
+    // (only differs for Ilala CBD wards — everything else is a no-op).
+    const trueDistrict = WARD_TO_TRUE_DISTRICT[w] ?? mapRegion
+    if (trueDistrict !== district) onDistrictChange(trueDistrict)
   }
+
+  // ── Street suggestions ───────────────────────────────────────────
+  // Pulled from the authoritative admin-divisions JSON for the current
+  // true district + ward. Falls back to [] (empty datalist, pure free
+  // text) if the ward isn't in the JSON for any reason — never blocks typing.
+  const streetSuggestions: string[] =
+    (district && ward && (darAdminDivisions as any)[district]?.[ward]) || []
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -243,10 +300,10 @@ export default function DistrictMapPicker({
               onClick={() => handleDistrictClick(d)}
               style={{
                 padding: '6px 14px', borderRadius: 999, fontSize: 13, cursor: 'pointer',
-                border: `1.5px solid ${district === d ? ACCENT : 'var(--clr-border)'}`,
-                background: district === d ? 'rgba(198,255,89,0.12)' : 'var(--clr-card)',
-                color: district === d ? ACCENT : 'var(--clr-text-2)',
-                fontWeight: district === d ? 700 : 400,
+                border: `1.5px solid ${mapRegion === d ? ACCENT : 'var(--clr-border)'}`,
+                background: mapRegion === d ? 'rgba(198,255,89,0.12)' : 'var(--clr-card)',
+                color: mapRegion === d ? ACCENT : 'var(--clr-text-2)',
+                fontWeight: mapRegion === d ? 700 : 400,
                 transition: 'all .2s',
               }}
             >{d}</button>
@@ -259,7 +316,7 @@ export default function DistrictMapPicker({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--clr-text-3)', letterSpacing: '.4px' }}>
-              WARD — {district.toUpperCase()} <span style={{ fontWeight: 400, color: 'var(--clr-text-3)' }}>(optional, improves accuracy)</span>
+              WARD — {mapRegion.toUpperCase()} <span style={{ fontWeight: 400, color: 'var(--clr-text-3)' }}>(optional, improves accuracy)</span>
             </label>
             {ward && (
               <button onClick={() => onWardChange('')}
@@ -330,10 +387,11 @@ export default function DistrictMapPicker({
       {district && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--clr-text-3)', letterSpacing: '.4px' }}>
-            STREET / AREA <span style={{ fontWeight: 400 }}>(optional)</span>
+            STREET / AREA <span style={{ fontWeight: 400 }}>(optional — pick a suggestion or type your own)</span>
           </label>
           <input
             type="text"
+            list="street-suggestions"
             placeholder={`e.g. Kariakoo, Mnazi Mmoja…`}
             value={village}
             onChange={e => onVillageChange(e.target.value)}
@@ -347,6 +405,11 @@ export default function DistrictMapPicker({
             onFocus={e => (e.target.style.borderColor = 'var(--clr-border-focus, #888)')}
             onBlur={e => (e.target.style.borderColor = 'var(--clr-border)')}
           />
+          {/* Suggestions only — this stays a free-text input, so a street
+              not in the list can still be typed and submitted. */}
+          <datalist id="street-suggestions">
+            {streetSuggestions.map(s => <option key={s} value={s} />)}
+          </datalist>
         </div>
       )}
     </div>

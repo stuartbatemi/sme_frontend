@@ -13,6 +13,15 @@ export const advisoryAPI: {
   predict: (payload: Record<string, any>) => Promise<any>
   history: (page?: number, limit?: number) => Promise<any>
   getSession: (id: string | number) => Promise<any>
+  experienceSearch: (q?: string) => Promise<any>
+}
+
+export const consultantAPI: {
+  analyze: (payload: Record<string, any>) => Promise<any>
+}
+
+export const microfinanceAPI: {
+  list: (riskTier: string) => Promise<any>
 }
 
 export const userAPI: {

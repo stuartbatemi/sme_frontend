@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { advisoryAPI, modelAPI } from '../services/api'
+import { advisoryAPI, modelAPI, consultantAPI, microfinanceAPI } from '../services/api'
 import { Button, Input, Select, Card, Spinner, Alert, Badge } from '../components/common/UI'
 import { PathCard } from '../components/ui/path-card'
 import DistrictMapPicker from '../components/ui/DistrictMapPicker'
@@ -10,6 +10,13 @@ import pathAThumb from '../assets/path-a-card-bg.jpg'
 import pathBThumb from '../assets/path-b-card-bg.jpg'
 const MIN_CAPITAL = 20000
 const SUGGESTION_COUNT_OPTIONS = [3, 5, 8, 10]
+
+interface PriorExperienceEntry {
+  isic_detailed: number
+  activity_label: string
+  years: string
+  still_active: boolean
+}
 
 interface AdvisorForm {
   path_type: string
@@ -23,12 +30,16 @@ interface AdvisorForm {
   age: string
   gender: string
   top_n: number
+  funding_type: string                    // '' | 'personal' | 'loan' | 'expansion'
+  prior_experience: PriorExperienceEntry[]
+  experience_preference: string            // 'experience' | 'new' | 'both'
 }
 
 const emptyForm: AdvisorForm = {
   path_type: '', business_idea: '', isic_detailed: null, activity_label: '',
   district: '', ward: '', village: '',
   capital_tzs: '', age: '', gender: '', top_n: 5,
+  funding_type: '', prior_experience: [], experience_preference: 'both',
 }
 
 export default function AdvisorPage() {
@@ -49,6 +60,15 @@ export default function AdvisorPage() {
   const [result,    setResult]    = useState<any>(null)
   const [error,     setError]     = useState('')
   const [capError,  setCapError]  = useState('')
+
+  // ── Funding sub-flow (lives inside Step 1, doesn't need its own
+  // step number — keeps the existing step machine untouched) ────────
+  const [showFunding, setShowFunding] = useState(false)
+  const [expQuery,    setExpQuery]    = useState('')
+  const [expSearching, setExpSearching] = useState(false)
+  const [expMatches,  setExpMatches]  = useState<any[]>([])
+  const [expYears,    setExpYears]    = useState('1')
+  const [expActive,   setExpActive]   = useState(true)
 
   // Pre-fill from user profile if logged in
   useEffect(() => {
@@ -105,6 +125,33 @@ export default function AdvisorPage() {
     submitPrediction({ ...form, isic_detailed: act.ISIC_Detailed, activity_label: act.MainActivityDescription })
   }
 
+  // ── Prior-experience search (funding_type === 'expansion') ─────────
+  async function searchExperience() {
+    if (!expQuery.trim()) return
+    setExpSearching(true); setExpMatches([])
+    try {
+      const { data } = await advisoryAPI.experienceSearch(expQuery)
+      setExpMatches((data.activities || []).slice(0, 8))
+    } catch {
+      setExpMatches([])
+    } finally { setExpSearching(false) }
+  }
+
+  function addExperienceEntry(act: any) {
+    const entry: PriorExperienceEntry = {
+      isic_detailed: act.ISIC_Detailed,
+      activity_label: act.MainActivityDescription,
+      years: expYears,
+      still_active: expActive,
+    }
+    setForm(p => ({ ...p, prior_experience: [...p.prior_experience, entry] }))
+    setExpQuery(''); setExpMatches([])
+  }
+
+  function removeExperienceEntry(idx: number) {
+    setForm(p => ({ ...p, prior_experience: p.prior_experience.filter((_, i) => i !== idx) }))
+  }
+
   // ── Submit ────────────────────────────────────────────────────────
   async function submitPrediction(overrides: Partial<AdvisorForm> = {}) {
     const f = { ...form, ...overrides }
@@ -118,6 +165,10 @@ export default function AdvisorPage() {
       capital_tzs:   f.capital_tzs ? parseFloat(f.capital_tzs) : undefined,
       age:           f.age    ? parseInt(f.age)    : undefined,
       gender:        f.gender || undefined,
+      funding_type:  f.funding_type || undefined,
+      prior_experience: f.funding_type === 'expansion' && f.prior_experience.length > 0
+        ? f.prior_experience.map(e => ({ isic_detailed: e.isic_detailed, years: parseFloat(e.years) || 0, still_active: e.still_active }))
+        : undefined,
       ...(f.path_type === 'A'
         ? { isic_detailed: f.isic_detailed, workers: 1 }
         : { top_n: f.top_n || 5 }
@@ -125,6 +176,14 @@ export default function AdvisorPage() {
     }
     try {
       const { data } = await advisoryAPI.predict(payload)
+      // Client-side experience-preference filter for Path B — 'experience'
+      // shows only matches, 'new' shows only non-matches, 'both' (default)
+      // shows the model's own boosted ranking unfiltered.
+      if (f.path_type === 'B' && Array.isArray(data.recommendations) && f.experience_preference !== 'both') {
+        const wantMatch = f.experience_preference === 'experience'
+        const filtered = data.recommendations.filter((r: any) => !!r.matches_your_experience === wantMatch)
+        data.recommendations = filtered.length > 0 ? filtered : data.recommendations
+      }
       setResult(data)
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.detail || 'Prediction failed. Please try again.')
@@ -132,7 +191,10 @@ export default function AdvisorPage() {
     } finally { setLoading(false) }
   }
 
-  function reset() { setForm(emptyForm); setResult(null); setError(''); setMatches([]); setStep(0) }
+  function reset() {
+    setForm(emptyForm); setResult(null); setError(''); setMatches([]); setStep(0)
+    setShowFunding(false); setExpQuery(''); setExpMatches([]); setExpYears('1'); setExpActive(true)
+  }
 
   // ── Determine step count based on login state ─────────────────────
   // Logged-in users skip the personal details step (age/gender already known)
@@ -140,8 +202,11 @@ export default function AdvisorPage() {
   const personalStep = user ? null : 2   // null means skip it
 
   function goFromLocation() {
+    setShowFunding(true)   // reveal funding-type question within Step 1, don't advance yet
+  }
+
+  function goFromFunding() {
     if (user) {
-      // Skip personal step — go straight to idea search or submit
       if (form.path_type === 'A') setStep(3)
       else submitPrediction()
     } else {
@@ -226,9 +291,9 @@ export default function AdvisorPage() {
         </div>
       )}
 
-      {/* Step 1: Location + Capital */}
+      {/* Step 1: Location + Capital (+ funding-type sub-flow, revealed after Continue) */}
       {step === 1 && (
-        <StepCard title="Where is your business, and how much capital do you have?" step={1} total={user ? 2 : 3} onBack={() => setStep(0)}>
+        <StepCard title="Where is your business, and how much capital do you have?" step={1} total={user ? 2 : 3} onBack={() => showFunding ? setShowFunding(false) : setStep(0)}>
           {/* Map-based district + ward + street picker */}
           <DistrictMapPicker
             district={form.district}
@@ -258,9 +323,100 @@ export default function AdvisorPage() {
             />
           )}
 
-          <Button variant="primary" fullWidth disabled={!form.district || !!capError} onClick={goFromLocation}>
-            {form.path_type === 'A' ? 'Continue →' : (user ? 'Get Recommendations →' : 'Continue →')}
-          </Button>
+          {!showFunding && (
+            <Button variant="primary" fullWidth disabled={!form.district || !!capError} onClick={goFromLocation}>
+              Continue →
+            </Button>
+          )}
+
+          {/* ── Funding-type question (revealed after Continue) ────── */}
+          {showFunding && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--space-4)' }}>
+              <Select label="How are you funding this?" name="funding_type"
+                value={form.funding_type}
+                onChange={e => set('funding_type', e.target.value)}
+                options={[
+                  { value: 'personal', label: 'Personal funds' },
+                  { value: 'loan', label: 'Taking a loan' },
+                  { value: 'expansion', label: "Business expansion — I already own a business" },
+                ]}
+              />
+
+              {/* ── Prior-experience search (expansion only) ─────────── */}
+              {form.funding_type === 'expansion' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+                  <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 700, letterSpacing: '.4px' }}>
+                    WHAT BUSINESS(ES) HAVE YOU OWNED OR RUN?
+                  </p>
+
+                  {form.prior_experience.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {form.prior_experience.map((entry, i) => (
+                        <div key={i} style={{
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          padding: '8px 12px', borderRadius: 'var(--radius-sm)',
+                          background: 'var(--clr-bg)', fontSize: 13,
+                        }}>
+                          <span>{entry.activity_label} — {entry.years} yr{parseFloat(entry.years) === 1 ? '' : 's'}{entry.still_active ? ' (still active)' : ' (closed)'}</span>
+                          <button onClick={() => removeExperienceEntry(i)}
+                            style={{ background: 'none', border: 'none', color: 'var(--clr-text-3)', cursor: 'pointer', fontSize: 14 }}
+                            aria-label="Remove">✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: 180 }}>
+                      <Input label="Search business type" name="exp_query" value={expQuery}
+                        onChange={e => setExpQuery(e.target.value)}
+                        placeholder='"retail shop", "hair salon"...'
+                      />
+                    </div>
+                    <div style={{ width: 90 }}>
+                      <Input label="Years" name="exp_years" type="number" value={expYears}
+                        onChange={e => setExpYears(e.target.value)} min={0} />
+                    </div>
+                    <Select label="Status" name="exp_active" value={expActive ? 'yes' : 'no'}
+                      onChange={e => setExpActive(e.target.value === 'yes')}
+                      options={[{ value: 'yes', label: 'Still active' }, { value: 'no', label: 'Closed' }]}
+                    />
+                    <Button variant="secondary" loading={expSearching} onClick={searchExperience}>Search</Button>
+                  </div>
+
+                  {expMatches.length > 0 && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+                      {expMatches.map(m => (
+                        <button key={m.ISIC_Detailed} onClick={() => addExperienceEntry(m)}
+                          style={{
+                            textAlign: 'left', padding: 'var(--space-2) var(--space-3)',
+                            borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--clr-border)',
+                            background: 'var(--clr-card)', cursor: 'pointer', color: 'var(--clr-text)', fontSize: 13,
+                          }}
+                        >{m.MainActivityDescription}</button>
+                      ))}
+                    </div>
+                  )}
+
+                  <Select label="Should we prioritize your experience, new ideas, or both?" name="experience_preference"
+                    value={form.experience_preference}
+                    onChange={e => set('experience_preference', e.target.value)}
+                    options={[
+                      { value: 'both', label: 'Both — show a mix' },
+                      { value: 'experience', label: 'Prioritize what I already know' },
+                      { value: 'new', label: 'Show me new ideas instead' },
+                    ]}
+                  />
+                </div>
+              )}
+
+              <Button variant="primary" fullWidth
+                disabled={!form.funding_type}
+                onClick={goFromFunding}>
+                {form.path_type === 'A' ? 'Continue →' : (user ? 'Get Recommendations →' : 'Continue →')}
+              </Button>
+            </div>
+          )}
         </StepCard>
       )}
 
@@ -337,12 +493,31 @@ export default function AdvisorPage() {
               <Button style={{ marginTop: 'var(--space-4)' }} onClick={() => setStep(form.path_type==='A' ? 3 : (user ? 1 : 2))}>← Try again</Button>
             </Card>
           )}
-          {!loading && result && (
+          {!loading && result && result.blocked && (
+            <Card style={{ background: 'var(--clr-warning-lt)', border: '1px solid var(--clr-warning)' }}>
+              <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-warning)', letterSpacing: '.4px', marginBottom: 8 }}>
+                CAPITAL TOO LOW FOR THIS BUSINESS TYPE
+              </p>
+              <p style={{ fontSize: 15 }}>{result.message}</p>
+              <p style={{ fontSize: 13, color: 'var(--clr-text-2)', marginTop: 8 }}>
+                Minimum realistic capital: <strong>TZS {Number(result.min_capital_tzs).toLocaleString()}</strong>
+              </p>
+              <Button style={{ marginTop: 'var(--space-4)' }} onClick={() => setStep(form.path_type === 'A' ? 3 : 1)}>
+                ← Try a different idea or amount
+              </Button>
+            </Card>
+          )}
+          {!loading && result && !result.blocked && (
             <>
               {form.path_type === 'A'
-                ? <PathAResult result={result} activityLabel={form.activity_label} />
-                : <PathBResult result={result} />
+                ? <PathAResult result={result} activityLabel={form.activity_label} fundingType={form.funding_type} />
+                : <PathBResult result={result} fundingType={form.funding_type} />
               }
+              {form.funding_type === 'loan' && (
+                <MicrofinancePanel defaultRiskTier={
+                  form.path_type === 'A' ? result.risk_tier : (result.recommendations?.[0]?.risk_tier || 'Medium')
+                } />
+              )}
               {result.saved && (
                 <p style={{ textAlign:'center', marginTop:'var(--space-4)', fontSize:'13px', color:'var(--clr-success)' }}>
                   ✓ Saved to your Premium history.
@@ -388,7 +563,7 @@ function StatBox({ label, value, sub }: { label: string, value: string, sub?: st
   )
 }
 
-function PathAResult({ result, activityLabel }: { result: any, activityLabel: string }) {
+function PathAResult({ result, activityLabel, fundingType }: { result: any, activityLabel: string, fundingType?: string }) {
   const fmt = (n: any) => n ? Number(n).toLocaleString() : '—'
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:'var(--space-4)' }}>
@@ -399,9 +574,17 @@ function PathAResult({ result, activityLabel }: { result: any, activityLabel: st
             <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1.2rem,3vw,1.5rem)', wordBreak:'break-word' }}>{activityLabel || result.activity}</h2>
             <p style={{ fontSize:'14px', color:'var(--clr-text-2)', marginTop:4 }}>{result.sector}</p>
           </div>
-          <div style={{ textAlign:'right', flexShrink:0 }}>
-            <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>SUCCESS CHANCE</p>
-            <Badge label={result.success_chance} />
+          <div style={{ textAlign:'right', flexShrink:0, display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end' }}>
+            <div>
+              <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>SUCCESS CHANCE</p>
+              <Badge label={result.success_chance} />
+            </div>
+            {fundingType === 'loan' && result.risk_tier && (
+              <div>
+                <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>LOAN RISK</p>
+                <Badge label={result.risk_tier} />
+              </div>
+            )}
           </div>
         </div>
       </Card>
@@ -428,11 +611,24 @@ function PathAResult({ result, activityLabel }: { result: any, activityLabel: st
           {result.warnings.map((w: string, i: number) => <p key={i} style={{ fontSize:'14px', color:'var(--clr-warning)' }}>⚠ {w}</p>)}
         </Card>
       )}
+
+      <ConsultantPanel payload={{
+        activity: activityLabel || result.activity,
+        sector: result.sector,
+        district: result.location?.district,
+        ward: result.location?.ward,
+        capital_tzs: result.startup_capital_tzs,
+        monthly_profit: result.expected_monthly_profit_tzs,
+        success_chance: result.success_chance,
+        existing_similar_businesses_in_area: result.existing_similar_businesses_in_area,
+        roi_percent: result.roi_percent_per_year,
+        breakeven_months: result.breakeven_months,
+      }} />
     </div>
   )
 }
 
-function PathBResult({ result }: { result: any }) {
+function PathBResult({ result, fundingType }: { result: any, fundingType?: string }) {
   const fmt = (n: any) => n ? Number(n).toLocaleString() : '—'
   const count = result.recommendations?.length || 0
   return (
@@ -448,10 +644,18 @@ function PathBResult({ result }: { result: any }) {
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'var(--space-3)', flexWrap:'wrap', gap:8 }}>
             <div style={{ flex:1, minWidth:0 }}>
               <span style={{ fontSize:'11px', fontWeight:700, color:'var(--clr-text-3)' }}>#{i+1}</span>
+              {rec.matches_your_experience && (
+                <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: 'var(--clr-primary)', letterSpacing: '.3px' }}>
+                  ★ BASED ON YOUR EXPERIENCE
+                </span>
+              )}
               <h3 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1rem,2.5vw,1.15rem)', margin:'2px 0', wordBreak:'break-word' }}>{rec.activity}</h3>
               <span style={{ fontSize:'13px', color:'var(--clr-text-2)' }}>{rec.sector}</span>
             </div>
-            <Badge label={rec.success_chance} />
+            <div style={{ display:'flex', flexDirection:'column', gap:6, alignItems:'flex-end' }}>
+              <Badge label={rec.success_chance} />
+              {fundingType === 'loan' && rec.risk_tier && <Badge label={`${rec.risk_tier} risk`} />}
+            </div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(120px,1fr))', gap:'var(--space-2)' }}>
             {[['Capital', `TZS ${fmt(rec.startup_capital_tzs)}`], ['Monthly Profit', `TZS ${fmt(rec.expected_monthly_profit_tzs)}`], ['ROI / year', `${rec.roi_percent_per_year}%`], ['Break-even', `${rec.breakeven_months} mo`]]
@@ -463,8 +667,158 @@ function PathBResult({ result }: { result: any }) {
               ))}
           </div>
           <p style={{ fontSize:'12px', color:'var(--clr-text-3)', marginTop:'var(--space-3)' }}>{rec.existing_similar_businesses_in_area} similar businesses nearby</p>
+          {rec.warning && (
+            <p style={{ fontSize:'12px', color:'var(--clr-warning)', marginTop:'var(--space-2)' }}>⚠ {rec.warning}</p>
+          )}
+          <ConsultantPanel payload={{
+            activity: rec.activity,
+            sector: rec.sector,
+            district: result.location?.district,
+            ward: result.location?.ward,
+            capital_tzs: rec.startup_capital_tzs,
+            monthly_profit: rec.expected_monthly_profit_tzs,
+            success_chance: rec.success_chance,
+            existing_similar_businesses_in_area: rec.existing_similar_businesses_in_area,
+            roi_percent: rec.roi_percent_per_year,
+            breakeven_months: rec.breakeven_months,
+          }} />
         </Card>
       ))}
     </div>
+  )
+}
+
+// ── AI Consultant panel — lazy: fetches only when the person clicks ──
+function ConsultantPanel({ payload }: { payload: any }) {
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [data, setData] = useState<any>(null)
+  const [err, setErr] = useState('')
+
+  async function explain() {
+    if (data) { setOpen(o => !o); return }
+    setLoading(true); setErr('')
+    try {
+      const { data: res } = await consultantAPI.analyze(payload)
+      setData(res); setOpen(true)
+    } catch (e: any) {
+      setErr(e.response?.data?.error || 'AI consultant is temporarily unavailable.')
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div style={{ marginTop: 'var(--space-3)' }}>
+      <Button variant="secondary" loading={loading} onClick={explain}>
+        {open ? 'Hide explanation ▲' : 'Explain this recommendation →'}
+      </Button>
+      {err && <Alert type="error" message={err} />}
+      {open && data && (
+        <div style={{ marginTop: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+          <div>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>3 MONTHS</p>
+            <p style={{ fontSize:14 }}>{data.three_month_outlook}</p>
+          </div>
+          <div>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>6 MONTHS</p>
+            <p style={{ fontSize:14 }}>{data.six_month_outlook}</p>
+          </div>
+          <div>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>12 MONTHS</p>
+            <p style={{ fontSize:14 }}>{data.twelve_month_outlook}</p>
+          </div>
+          {data.first_30_days?.length > 0 && (
+            <div>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px', marginBottom:4 }}>FIRST 30 DAYS</p>
+              <ol style={{ paddingLeft: 18, fontSize: 14 }}>
+                {data.first_30_days.map((step: string, i: number) => <li key={i} style={{ marginBottom: 4 }}>{step}</li>)}
+              </ol>
+            </div>
+          )}
+          {data.supplier_guidance && (
+            <div>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>SUPPLIERS</p>
+              <p style={{ fontSize:14 }}>{data.supplier_guidance}</p>
+            </div>
+          )}
+          {data.risk_factors_outside_the_model?.length > 0 && (
+            <div>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px', marginBottom:4 }}>RISKS NOT IN THE MODEL</p>
+              <ul style={{ paddingLeft: 18, fontSize: 14 }}>
+                {data.risk_factors_outside_the_model.map((r: string, i: number) => <li key={i} style={{ marginBottom: 4 }}>{r}</li>)}
+              </ul>
+            </div>
+          )}
+          <p style={{ fontSize: 11, color: 'var(--clr-text-3)', fontStyle: 'italic' }}>{data.generated_by}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Microfinance panel (loan funding path) ────────────────────────
+function MicrofinancePanel({ defaultRiskTier }: { defaultRiskTier: string }) {
+  const [tier, setTier] = useState(defaultRiskTier || 'Medium')
+  const [loading, setLoading] = useState(false)
+  const [institutions, setInstitutions] = useState<any[]>([])
+  const [err, setErr] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true); setErr('')
+    microfinanceAPI.list(tier)
+      .then(({ data }: any) => { if (!cancelled) setInstitutions(data.institutions || []) })
+      .catch(() => { if (!cancelled) setErr('Could not load lender options right now.') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [tier])
+
+  return (
+    <Card style={{ marginTop: 'var(--space-4)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 'var(--space-3)' }}>
+        <p style={{ fontSize:12, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>LENDERS THAT MAY SUPPORT THIS</p>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {['Low', 'Medium', 'High'].map(t => (
+            <button key={t} onClick={() => setTier(t)}
+              style={{
+                padding: '4px 10px', borderRadius: 999, fontSize: 12, cursor: 'pointer',
+                border: `1.5px solid ${tier === t ? 'var(--clr-primary)' : 'var(--clr-border)'}`,
+                background: tier === t ? 'var(--clr-primary-lt)' : 'var(--clr-card)',
+                color: tier === t ? 'var(--clr-primary)' : 'var(--clr-text-2)',
+                fontWeight: tier === t ? 700 : 400,
+              }}
+            >{t} risk</button>
+          ))}
+        </div>
+      </div>
+      {loading && <Spinner size={24} />}
+      {err && <Alert type="error" message={err} />}
+      {!loading && !err && institutions.length === 0 && (
+        <p style={{ fontSize: 13, color: 'var(--clr-text-3)' }}>No matching lenders found for this risk tier.</p>
+      )}
+      {!loading && institutions.map((inst: any) => (
+        <div key={inst.id} style={{ padding: '10px 0', borderTop: '1px solid var(--clr-border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+            <strong style={{ fontSize: 14 }}>{inst.name}</strong>
+            <span style={{ fontSize: 11, color: 'var(--clr-text-3)', textTransform: 'uppercase' }}>{inst.type.replace('_', ' ')}</span>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--clr-text-2)', marginTop: 4 }}>{inst.eligibility_summary}</p>
+          {(inst.min_loan_tzs || inst.max_loan_tzs) && (
+            <p style={{ fontSize: 12, color: 'var(--clr-text-3)', marginTop: 4 }}>
+              Loan range: TZS {inst.min_loan_tzs ? Number(inst.min_loan_tzs).toLocaleString() : '—'}
+              {' – '}
+              {inst.max_loan_tzs ? Number(inst.max_loan_tzs).toLocaleString() : 'varies'}
+            </p>
+          )}
+          {inst.website && (
+            <a href={inst.website} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--clr-primary)' }}>
+              Visit website →
+            </a>
+          )}
+        </div>
+      ))}
+      <p style={{ fontSize: 11, color: 'var(--clr-text-3)', marginTop: 'var(--space-3)', fontStyle: 'italic' }}>
+        Terms shown are general reference info from each lender's own site, not a live quote — confirm directly before applying.
+      </p>
+    </Card>
   )
 }
