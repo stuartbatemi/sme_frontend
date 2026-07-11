@@ -71,7 +71,7 @@ export function PathCard({
 
         <div
           style={labelStyle}
-          className={cn("absolute inset-0 flex flex-col items-start justify-end gap-2 p-6 pb-8 overflow-hidden", labelClassName)}
+          className={cn("absolute inset-0 flex flex-col items-start justify-end gap-2 p-6 pl-8 pb-10 overflow-hidden", labelClassName)}
         >
           <h3 className="font-display text-lg font-semibold leading-snug text-white drop-shadow-md sm:text-xl">
             {title}
