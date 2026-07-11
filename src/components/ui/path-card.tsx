@@ -43,7 +43,7 @@ export function PathCard({
         style={{ backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center", ...style }}
         className={cn(
           "group relative w-full overflow-hidden rounded-2xl",
-          "aspect-[4/5] max-h-[420px] min-h-[260px]",
+          "aspect-4/5 max-h-105 min-h-65",
           "ring-1 ring-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
           "transition-transform duration-300 hover:-translate-y-1",
           className
@@ -59,7 +59,7 @@ export function PathCard({
         style={{ backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center", ...style }}
         className={cn(
           "group relative w-full overflow-hidden rounded-2xl text-left",
-          "aspect-[4/5] max-h-[420px] min-h-[260px]",
+          "aspect-4/5 max-h-105 min-h-70",
           "ring-1 ring-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
           "transition-transform duration-300 hover:-translate-y-1",
           className
@@ -67,11 +67,11 @@ export function PathCard({
       >
         {/* Scrim — strong enough that the title+description are always
             legible, no hover required. */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/5" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/85 via-black/35 to-black/5" />
 
         <div
           style={labelStyle}
-          className={cn("absolute inset-0 flex flex-col items-start justify-end gap-1.5 p-6 pb-7 overflow-hidden", labelClassName)}
+          className={cn("absolute inset-0 flex flex-col items-start justify-end gap-2 p-6 pb-8 overflow-hidden", labelClassName)}
         >
           <h3 className="font-display text-lg font-semibold leading-snug text-white drop-shadow-md sm:text-xl">
             {title}
@@ -89,7 +89,7 @@ export function PathCard({
       onClick={onClick}
       className={cn(
         "group relative w-full overflow-hidden rounded-2xl text-left",
-        "aspect-[3/4] min-h-[280px]",
+        "aspect-3/4 min-h-70",
         "ring-1 ring-black/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         "transition-transform duration-300 hover:-translate-y-1",
         className
@@ -97,7 +97,7 @@ export function PathCard({
       style={{ backgroundImage: `url(${image})`, backgroundSize: "cover", backgroundPosition: "center" }}
     >
       {/* Base scrim — keeps the bottom title chip legible even at rest */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent transition-opacity duration-300 group-hover:from-black/90 group-hover:via-black/55" />
+      <div className="absolute inset-0 bg-linear-to-t from-black/75 via-black/10 to-transparent transition-opacity duration-300 group-hover:from-black/90 group-hover:via-black/55" />
 
       {/* Resting state: compact title chip, bottom-left */}
       <div className="absolute inset-x-0 bottom-0 p-5 transition-opacity duration-300 group-hover:opacity-0">
