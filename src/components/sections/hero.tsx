@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
+import { useLanguage } from "../../context/LanguageContext"
 import { Spotlight } from "../ui/spotlight"
 import { ChatBotWidget } from "../ui/chat-bot-widget"
 import { TextRepel } from "../ui/text-repel"
@@ -11,6 +12,7 @@ interface HeroProps {
 export function Hero({ showCreateAccount = true }: HeroProps) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { t } = useLanguage()
   const goNext = () => user ? navigate("/advisor") : navigate("/register")
 
   return (
@@ -59,14 +61,12 @@ export function Hero({ showCreateAccount = true }: HeroProps) {
           color: "#E8A838", lineHeight: 1.6,
           maxWidth: 490,
         }}>
-          <strong>ORin</strong> studies{" "}
-          <strong>64,000+</strong> real Dar es Salaam enterprises — and
-          tells you in seconds whether your idea will work.
+{t('hero.eyebrow')}
         </div>
 
         {/* Headline — TextRepel */}
         <TextRepel
-          text="Business Advisor"
+          text={t('hero.headline')}
           radius={130}
           strength={36}
           stiffness={155}
@@ -93,7 +93,7 @@ export function Hero({ showCreateAccount = true }: HeroProps) {
           fontWeight: 400,
           lineHeight: 1.2,
           marginBottom: 22,
-        }}>for Dar es Salaam</p>
+        }}>{t('hero.subline')}</p>
 
         {/* Body */}
         <p style={{
@@ -103,8 +103,7 @@ export function Hero({ showCreateAccount = true }: HeroProps) {
           maxWidth: 510,
           marginBottom: 40,
         }}>
-          Find out if your business idea will succeed — or discover which
-          business to start — based on real data across all five districts.
+{t('hero.body')}
         </p>
 
         {/* CTAs */}
@@ -130,7 +129,7 @@ export function Hero({ showCreateAccount = true }: HeroProps) {
               (e.currentTarget as HTMLButtonElement).style.filter = "brightness(1)"
               ;(e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"
             }}
-          >Get Free Advice →</button>
+          >{t('hero.cta_primary')}</button>
 
           {showCreateAccount && (
             <button
@@ -152,7 +151,7 @@ export function Hero({ showCreateAccount = true }: HeroProps) {
                 (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"
                 ;(e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"
               }}
-            >Create Premium Account</button>
+            >{t('hero.cta_secondary')}</button>
           )}
         </div>
       </div>

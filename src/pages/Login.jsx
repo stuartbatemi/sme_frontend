@@ -2,10 +2,12 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import { Button, Input, Card, Alert } from '../components/common/UI'
 
 export default function Login() {
   const { login }  = useAuth()
+  const { t }      = useLanguage()
   const navigate   = useNavigate()
   const [form, setForm]     = useState({ email: '', password: '' })
   const [error, setError]   = useState('')
@@ -21,7 +23,7 @@ export default function Login() {
       await login(form.email, form.password)
       navigate('/advisor')
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Check your email and password.')
+      setError(err.response?.data?.error || t('login.error_default'))
     } finally {
       setLoading(false)
     }
@@ -36,10 +38,10 @@ export default function Login() {
       <div style={{ width: '100%', maxWidth: 420 }} className="animate-fadeUp">
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-8)' }}>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', marginBottom: 'var(--space-2)' }}>
-            Welcome back
+            {t('login.welcome_title')}
           </h1>
           <p style={{ color: 'var(--clr-text-2)' }}>
-            Log in to continue with your business advice.
+            {t('login.welcome_sub')}
           </p>
         </div>
 
@@ -48,25 +50,25 @@ export default function Login() {
             <Alert type="error" message={error} />
 
             <Input
-              label="Email address" name="email" type="email"
+              label={t('login.email_label')} name="email" type="email"
               value={form.email} onChange={e => set('email', e.target.value)}
-              placeholder="you@example.com" required
+              placeholder={t('login.email_placeholder')} required
             />
             <Input
-              label="Password" name="password" type="password"
+              label={t('login.password_label')} name="password" type="password"
               value={form.password} onChange={e => set('password', e.target.value)}
-              placeholder="Your password" required
+              placeholder={t('login.password_placeholder')} required
             />
 
             <Button type="submit" variant="primary" fullWidth loading={loading}>
-              Log in
+              {t('login.submit')}
             </Button>
           </form>
         </Card>
 
         <p style={{ textAlign: 'center', marginTop: 'var(--space-5)', fontSize: '14px', color: 'var(--clr-text-2)' }}>
-          Don't have an account?{' '}
-          <Link to="/register" style={{ fontWeight: 600 }}>Create a free account</Link>
+          {t('login.no_account')}{' '}
+          <Link to="/register" style={{ fontWeight: 600 }}>{t('login.create_account')}</Link>
         </p>
 
       </div>

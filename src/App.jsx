@@ -3,6 +3,7 @@ import React from 'react'
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { LanguageProvider, useLanguage } from './context/LanguageContext'
 import Navbar      from './components/common/Navbar'
 import Home        from './pages/Home'
 import AdvisorPage from './pages/AdvisorPage'
@@ -27,6 +28,7 @@ function ProtectedRoute({ children }) {
 function AppRoutes() {
   const location = useLocation()
   const isGISPage = location.pathname === '/gis-explorer'
+  const { t } = useLanguage()
   
   return (
     <>
@@ -49,7 +51,7 @@ function AppRoutes() {
           textAlign: 'center', fontSize: '13px', color: 'var(--clr-text-3)',
         }}>
           © {new Date().getFullYear()} SME Advisor — Dar es Salaam ·{' '}
-          Built on real NBS & Census data
+          {t('home.footer')}
         </footer>
       )}
     </>
@@ -59,9 +61,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </LanguageProvider>
     </ThemeProvider>
   )
 }

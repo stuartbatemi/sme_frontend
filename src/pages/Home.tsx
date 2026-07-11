@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom"
 import { Hero } from "../components/sections/hero"
 import { useAuth } from "../context/AuthContext"
+import { useLanguage } from "../context/LanguageContext"
 
 export default function Home() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { t } = useLanguage()
 
   return (
     <div style={{ background: "var(--clr-bg)", color: "var(--clr-text)" }}>
@@ -22,23 +24,21 @@ export default function Home() {
             fontSize: 11, fontWeight: 700, letterSpacing: "0.8px",
             textTransform: "uppercase", color: "var(--clr-primary)",
             marginBottom: 12,
-          }}>How it works</p>
+          }}>{t('home.how_eyebrow')}</p>
 
           <h2 style={{
             fontFamily: "var(--font-display)",
             fontSize: "clamp(1.6rem, 3.5vw, 2.2rem)",
             lineHeight: 1.2, color: "var(--clr-text)",
             marginBottom: 16,
-          }}>Two paths. One clear answer.</h2>
+          }}>{t('home.how_title')}</h2>
 
           <p style={{
             fontSize: "clamp(0.9rem, 1.8vw, 1rem)",
             color: "var(--clr-text-2)", lineHeight: 1.75,
             maxWidth: 500, margin: "0 auto",
           }}>
-            Tell us your idea and we'll score it — or tell us your budget and
-            we'll rank what works best in your area. Based on 64,000+ real
-            Dar es Salaam enterprises.
+            {t('home.how_body')}
           </p>
         </div>
       </section>
@@ -55,13 +55,13 @@ export default function Home() {
             fontFamily: "var(--font-display)",
             fontSize: "clamp(1.5rem, 3vw, 2rem)",
             color: "var(--clr-text)", lineHeight: 1.25, marginBottom: 14,
-          }}>Ready to find your best business?</h2>
+          }}>{t('home.cta_title')}</h2>
 
           <p style={{
             fontSize: "clamp(0.88rem, 1.8vw, 0.97rem)",
             color: "var(--clr-text-2)", lineHeight: 1.72, marginBottom: 32,
           }}>
-            Free, instant, and built for Dar es Salaam. No account needed to start.
+            {t('home.cta_body')}
           </p>
 
           <button
@@ -82,11 +82,11 @@ export default function Home() {
               (e.currentTarget as HTMLButtonElement).style.background = "var(--clr-primary)"
               ;(e.currentTarget as HTMLButtonElement).style.transform = "translateY(0)"
             }}
-          >Start Now — It's Free →</button>
+          >{t('home.cta_button')}</button>
 
           {!user && (
             <p style={{ marginTop: 16, fontSize: "0.85rem", color: "var(--clr-text-3)" }}>
-              Already have an account?{" "}
+              {t('home.already_account')}{" "}
               <button
                 onClick={() => navigate("/login")}
                 style={{
@@ -95,7 +95,7 @@ export default function Home() {
                   cursor: "pointer", fontSize: "inherit",
                   textDecoration: "underline", padding: 0,
                 }}
-              >Log in</button>
+              >{t('nav.login')}</button>
             </p>
           )}
         </div>

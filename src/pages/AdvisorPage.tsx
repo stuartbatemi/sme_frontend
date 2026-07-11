@@ -2,12 +2,17 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import { advisoryAPI, modelAPI, consultantAPI, microfinanceAPI } from '../services/api'
 import { Button, Input, Select, Card, Spinner, Alert, Badge } from '../components/common/UI'
 import { PathCard } from '../components/ui/path-card'
 import DistrictMapPicker from '../components/ui/DistrictMapPicker'
 import pathAThumb from '../assets/path-a-card-bg.jpg'
 import pathBThumb from '../assets/path-b-card-bg.jpg'
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  PieChart, Pie, Cell, Legend,
+} from 'recharts'
 const MIN_CAPITAL = 20000
 const SUGGESTION_COUNT_OPTIONS = [3, 5, 8, 10]
 
@@ -44,6 +49,7 @@ const emptyForm: AdvisorForm = {
 
 export default function AdvisorPage() {
   const { user, loading: authLoading } = useAuth()
+  const { t } = useLanguage()
   const isPremium = user?.tier === 'premium'
   const navigate = useNavigate()
 
@@ -259,17 +265,17 @@ export default function AdvisorPage() {
       {step === 0 && (
         <div className="animate-fadeUp">
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.6rem, 4vw, 2.2rem)', marginBottom: 'var(--space-2)' }}>
-            {user ? `Hello ${user.full_name?.split(' ')[0]},` : 'Hello there,'}
+            {user ? t('advisor.welcome_user').replace('{name}', user.full_name?.split(' ')[0] || '') : t('advisor.welcome_guest')}
           </h1>
           <p style={{ color: 'var(--clr-text-2)', fontSize: '1rem', marginBottom: 'var(--space-6)' }}>
-            Welcome to SME Advisor. How can we help you today?
+            {t('advisor.welcome_sub')}
           </p>
           <div className="mx-auto grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-2">
             <PathCard
               variant="static"
               image={pathAThumb}
-              title="I have a business idea"
-              description="Check if your specific idea is likely to succeed in your area."
+              title={t('advisor.pathA_title')}
+              description={t('advisor.pathA_desc')}
               onClick={() => { set('path_type','A'); setStep(1) }}
               className="animate-fadeUp"
               style={{ animationDelay: '80ms' }}
@@ -279,8 +285,8 @@ export default function AdvisorPage() {
             <PathCard
               variant="static"
               image={pathBThumb}
-              title="Suggest me a business"
-              description="Get ranked business recommendations for your location and budget."
+              title={t('advisor.pathB_title')}
+              description={t('advisor.pathB_desc')}
               onClick={() => { set('path_type','B'); setStep(1) }}
               className="animate-fadeUp"
               style={{ animationDelay: '200ms' }}
@@ -293,7 +299,7 @@ export default function AdvisorPage() {
 
       {/* Step 1: Location + Capital (+ funding-type sub-flow, revealed after Continue) */}
       {step === 1 && (
-        <StepCard title="Where is your business, and how much capital do you have?" step={1} total={user ? 2 : 3} onBack={() => showFunding ? setShowFunding(false) : setStep(0)}>
+        <StepCard title={t('advisor.step1_title')} step={1} total={user ? 2 : 3} onBack={() => showFunding ? setShowFunding(false) : setStep(0)}>
           {/* Map-based district + ward + street picker */}
           <DistrictMapPicker
             district={form.district}
@@ -307,16 +313,16 @@ export default function AdvisorPage() {
           {/* Capital is asked of EVERYONE here — it's specific to this
               business query, not a fixed profile attribute, so it can't
               be safely skipped just because someone is logged in. */}
-          <Input label="Starting Capital (TZS)" name="capital_tzs" type="number"
+          <Input label={t('advisor.capital_label')} name="capital_tzs" type="number"
             value={form.capital_tzs} min={MIN_CAPITAL}
             onChange={e => { set('capital_tzs', e.target.value); validateCapital(e.target.value) }}
             placeholder={`e.g. 500000 (min TZS ${MIN_CAPITAL.toLocaleString()})`}
-            hint="Leave blank if unknown — we'll show the typical capital required."
+            hint={t('advisor.capital_hint')}
             error={capError}
           />
 
           {form.path_type === 'B' && (
-            <Select label="Number of business suggestions" name="top_n"
+            <Select label={t('advisor.suggestions_label')} name="top_n"
               value={String(form.top_n)}
               onChange={e => set('top_n', parseInt(e.target.value, 10))}
               options={SUGGESTION_COUNT_OPTIONS.map(n => ({ value: String(n), label: `${n} suggestions` }))}
@@ -325,20 +331,20 @@ export default function AdvisorPage() {
 
           {!showFunding && (
             <Button variant="primary" fullWidth disabled={!form.district || !!capError} onClick={goFromLocation}>
-              Continue →
+              {t('advisor.continue')}
             </Button>
           )}
 
           {/* ── Funding-type question (revealed after Continue) ────── */}
           {showFunding && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', borderTop: '1px solid var(--clr-border)', paddingTop: 'var(--space-4)' }}>
-              <Select label="How are you funding this?" name="funding_type"
+              <Select label={t('advisor.funding_label')} name="funding_type"
                 value={form.funding_type}
                 onChange={e => set('funding_type', e.target.value)}
                 options={[
-                  { value: 'personal', label: 'Personal funds' },
-                  { value: 'loan', label: 'Taking a loan' },
-                  { value: 'expansion', label: "Business expansion — I already own a business" },
+                  { value: 'personal', label: t('advisor.funding_personal') },
+                  { value: 'loan', label: t('advisor.funding_loan') },
+                  { value: 'expansion', label: t('advisor.funding_expansion') },
                 ]}
               />
 
@@ -346,7 +352,7 @@ export default function AdvisorPage() {
               {form.funding_type === 'expansion' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                   <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 700, letterSpacing: '.4px' }}>
-                    WHAT BUSINESS(ES) HAVE YOU OWNED OR RUN?
+                    {t('advisor.experience_title')}
                   </p>
 
                   {form.prior_experience.length > 0 && (
@@ -368,20 +374,20 @@ export default function AdvisorPage() {
 
                   <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: 180 }}>
-                      <Input label="Search business type" name="exp_query" value={expQuery}
+                      <Input label={t('advisor.experience_search_label')} name="exp_query" value={expQuery}
                         onChange={e => setExpQuery(e.target.value)}
-                        placeholder='"retail shop", "hair salon"...'
+                        placeholder={t('advisor.experience_search_placeholder')}
                       />
                     </div>
                     <div style={{ width: 90 }}>
-                      <Input label="Years" name="exp_years" type="number" value={expYears}
+                      <Input label={t('advisor.experience_years')} name="exp_years" type="number" value={expYears}
                         onChange={e => setExpYears(e.target.value)} min={0} />
                     </div>
-                    <Select label="Status" name="exp_active" value={expActive ? 'yes' : 'no'}
+                    <Select label={t('advisor.experience_status')} name="exp_active" value={expActive ? 'yes' : 'no'}
                       onChange={e => setExpActive(e.target.value === 'yes')}
-                      options={[{ value: 'yes', label: 'Still active' }, { value: 'no', label: 'Closed' }]}
+                      options={[{ value: 'yes', label: t('advisor.experience_active') }, { value: 'no', label: t('advisor.experience_closed') }]}
                     />
-                    <Button variant="secondary" loading={expSearching} onClick={searchExperience}>Search</Button>
+                    <Button variant="secondary" loading={expSearching} onClick={searchExperience}>{t('advisor.search')}</Button>
                   </div>
 
                   {expMatches.length > 0 && (
@@ -398,13 +404,13 @@ export default function AdvisorPage() {
                     </div>
                   )}
 
-                  <Select label="Should we prioritize your experience, new ideas, or both?" name="experience_preference"
+                  <Select label={t('advisor.experience_preference_label')} name="experience_preference"
                     value={form.experience_preference}
                     onChange={e => set('experience_preference', e.target.value)}
                     options={[
-                      { value: 'both', label: 'Both — show a mix' },
-                      { value: 'experience', label: 'Prioritize what I already know' },
-                      { value: 'new', label: 'Show me new ideas instead' },
+                      { value: 'both', label: t('advisor.experience_pref_both') },
+                      { value: 'experience', label: t('advisor.experience_pref_experience') },
+                      { value: 'new', label: t('advisor.experience_pref_new') },
                     ]}
                   />
                 </div>
@@ -413,7 +419,7 @@ export default function AdvisorPage() {
               <Button variant="primary" fullWidth
                 disabled={!form.funding_type}
                 onClick={goFromFunding}>
-                {form.path_type === 'A' ? 'Continue →' : (user ? 'Get Recommendations →' : 'Continue →')}
+                {form.path_type === 'A' ? t('advisor.continue') : (user ? t('advisor.get_recommendations') : t('advisor.continue'))}
               </Button>
             </div>
           )}
@@ -425,39 +431,39 @@ export default function AdvisorPage() {
           Capital is NOT asked here anymore — it moved to Step 1 above,
           since it's needed by every user regardless of login state). */}
       {step === 2 && !user && (
-        <StepCard title="Tell us about yourself" step={2} total={3} onBack={() => setStep(1)}>
+        <StepCard title={t('advisor.personal_title')} step={2} total={3} onBack={() => setStep(1)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-            <Input label="Age" name="age" type="number" value={form.age}
+            <Input label={t('advisor.age_label')} name="age" type="number" value={form.age}
               onChange={e => set('age', e.target.value)} placeholder="e.g. 28" min={16} max={100} />
-            <Select label="Gender" name="gender" value={form.gender}
+            <Select label={t('advisor.gender_label')} name="gender" value={form.gender}
               onChange={e => set('gender', e.target.value)}
-              options={[{ value: '', label: 'Prefer not to say' }, { value: 'male', label: 'Male' }, { value: 'female', label: 'Female' }]}
+              options={[{ value: '', label: t('advisor.gender_prefer_not') }, { value: 'male', label: t('advisor.gender_male') }, { value: 'female', label: t('advisor.gender_female') }]}
             />
           </div>
           <Button variant="primary" fullWidth onClick={goFromPersonal}>
-            {form.path_type === 'A' ? 'Continue →' : 'Get Recommendations →'}
+            {form.path_type === 'A' ? t('advisor.continue') : t('advisor.get_recommendations')}
           </Button>
         </StepCard>
       )}
 
       {/* Step 3: Business idea search (Path A) */}
       {step === 3 && (
-        <StepCard title="What is your business idea?" step={user ? 2 : 3} total={user ? 2 : 3} onBack={() => setStep(user ? 1 : 2)}>
+        <StepCard title={t('advisor.idea_title')} step={user ? 2 : 3} total={user ? 2 : 3} onBack={() => setStep(user ? 1 : 2)}>
           <Alert type="error" message={error} />
           <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-end' }}>
             <div style={{ flex: 1 }}>
-              <Input label="Describe your idea" name="business_idea" value={form.business_idea}
+              <Input label={t('advisor.idea_label')} name="business_idea" value={form.business_idea}
                 onChange={e => set('business_idea', e.target.value)}
-                placeholder='"bakery", "phone repair", "selling clothes"'
-                hint="Type a keyword in English or Swahili and click Search."
+                placeholder={t('advisor.idea_placeholder')}
+                hint={t('advisor.idea_hint')}
               />
             </div>
-            <Button variant="secondary" loading={searching} onClick={searchActivities}>Search</Button>
+            <Button variant="secondary" loading={searching} onClick={searchActivities}>{t('advisor.search')}</Button>
           </div>
 
           {matches.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 700, letterSpacing: '.4px' }}>SELECT THE BEST MATCH:</p>
+              <p style={{ fontSize: '12px', color: 'var(--clr-text-3)', fontWeight: 700, letterSpacing: '.4px' }}>{t('advisor.select_match')}</p>
               {matches.map(m => (
                 <button key={m.ISIC_Detailed} onClick={() => selectActivity(m)}
                   style={{
@@ -484,26 +490,26 @@ export default function AdvisorPage() {
           {loading && (
             <div style={{ textAlign: 'center', padding: 'var(--space-16) 0' }}>
               <Spinner size={44} />
-              <p style={{ marginTop: 'var(--space-4)', color: 'var(--clr-text-2)' }}>Analysing your business...</p>
+              <p style={{ marginTop: 'var(--space-4)', color: 'var(--clr-text-2)' }}>{t('advisor.analysing')}</p>
             </div>
           )}
           {!loading && error && (
             <Card>
               <Alert type="error" message={error} />
-              <Button style={{ marginTop: 'var(--space-4)' }} onClick={() => setStep(form.path_type==='A' ? 3 : (user ? 1 : 2))}>← Try again</Button>
+              <Button style={{ marginTop: 'var(--space-4)' }} onClick={() => setStep(form.path_type==='A' ? 3 : (user ? 1 : 2))}>{t('advisor.try_again')}</Button>
             </Card>
           )}
           {!loading && result && result.blocked && (
             <Card style={{ background: 'var(--clr-warning-lt)', border: '1px solid var(--clr-warning)' }}>
               <p style={{ fontSize: '13px', fontWeight: 700, color: 'var(--clr-warning)', letterSpacing: '.4px', marginBottom: 8 }}>
-                CAPITAL TOO LOW FOR THIS BUSINESS TYPE
+                {t('advisor.capital_blocked_title')}
               </p>
               <p style={{ fontSize: 15 }}>{result.message}</p>
               <p style={{ fontSize: 13, color: 'var(--clr-text-2)', marginTop: 8 }}>
-                Minimum realistic capital: <strong>TZS {Number(result.min_capital_tzs).toLocaleString()}</strong>
+                {t('advisor.capital_blocked_min')} <strong>TZS {Number(result.min_capital_tzs).toLocaleString()}</strong>
               </p>
               <Button style={{ marginTop: 'var(--space-4)' }} onClick={() => setStep(form.path_type === 'A' ? 3 : 1)}>
-                ← Try a different idea or amount
+                {t('advisor.capital_blocked_retry')}
               </Button>
             </Card>
           )}
@@ -520,11 +526,11 @@ export default function AdvisorPage() {
               )}
               {result.saved && (
                 <p style={{ textAlign:'center', marginTop:'var(--space-4)', fontSize:'13px', color:'var(--clr-success)' }}>
-                  ✓ Saved to your Premium history.
+                  {t('advisor.saved_premium')}
                 </p>
               )}
               <div style={{ textAlign:'center', marginTop:'var(--space-8)' }}>
-                <Button variant="secondary" onClick={reset}>Start a new query</Button>
+                <Button variant="secondary" onClick={reset}>{t('advisor.new_query')}</Button>
               </div>
             </>
           )}
@@ -537,6 +543,13 @@ export default function AdvisorPage() {
 
 // ── Subcomponents ─────────────────────────────────────────────────
 
+// Shared Y-axis tick formatter for TZS values — always returns a string
+// (Recharts' tickFormatter type requires a string return in all branches).
+function formatTzsTick(v: number): string {
+  if (v >= 1000000) return `${(v / 1000000).toFixed(1)}M`
+  if (v >= 1000) return `${(v / 1000).toFixed(0)}K`
+  return v.toString()
+}
 
 function StepCard({ title, step, total, onBack, children }: { title: string, step: number, total: number, onBack: () => void, children: React.ReactNode }) {
   return (
@@ -564,24 +577,29 @@ function StatBox({ label, value, sub }: { label: string, value: string, sub?: st
 }
 
 function PathAResult({ result, activityLabel, fundingType }: { result: any, activityLabel: string, fundingType?: string }) {
+  const { t } = useLanguage()
   const fmt = (n: any) => n ? Number(n).toLocaleString() : '—'
+  const chartData = [
+    { name: t('chart.capital'), value: Number(result.startup_capital_tzs) || 0 },
+    { name: t('chart.annual_profit'), value: (Number(result.expected_monthly_profit_tzs) || 0) * 12 },
+  ]
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:'var(--space-4)' }}>
       <Card>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', flexWrap:'wrap', gap:'var(--space-3)' }}>
           <div style={{ flex:1, minWidth:0 }}>
-            <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>BUSINESS ACTIVITY</p>
+            <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>{t('advisor.business_activity')}</p>
             <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1.2rem,3vw,1.5rem)', wordBreak:'break-word' }}>{activityLabel || result.activity}</h2>
             <p style={{ fontSize:'14px', color:'var(--clr-text-2)', marginTop:4 }}>{result.sector}</p>
           </div>
           <div style={{ textAlign:'right', flexShrink:0, display:'flex', flexDirection:'column', gap:8, alignItems:'flex-end' }}>
             <div>
-              <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>SUCCESS CHANCE</p>
+              <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>{t('advisor.success_chance')}</p>
               <Badge label={result.success_chance} />
             </div>
             {fundingType === 'loan' && result.risk_tier && (
               <div>
-                <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>LOAN RISK</p>
+                <p style={{ fontSize:'11px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:4, letterSpacing:'.4px' }}>{t('advisor.loan_risk')}</p>
                 <Badge label={result.risk_tier} />
               </div>
             )}
@@ -590,19 +608,33 @@ function PathAResult({ result, activityLabel, fundingType }: { result: any, acti
       </Card>
 
       <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))', gap:'var(--space-3)' }}>
-        <StatBox label="Starting Capital"      value={`TZS ${fmt(result.startup_capital_tzs)}`}     sub={result.capital_source?.includes('typical') ? 'Typical' : 'Your amount'} />
-        <StatBox label="Monthly Profit"        value={`TZS ${fmt(result.expected_monthly_profit_tzs)}`} />
-        <StatBox label="ROI / Year"            value={`${result.roi_percent_per_year}%`} />
-        <StatBox label="Break-even"            value={`${result.breakeven_months} months`} />
+        <StatBox label={t('advisor.starting_capital')} value={`TZS ${fmt(result.startup_capital_tzs)}`}     sub={result.capital_source?.includes('typical') ? t('advisor.typical') : t('advisor.your_amount')} />
+        <StatBox label={t('advisor.monthly_profit')}    value={`TZS ${fmt(result.expected_monthly_profit_tzs)}`} />
+        <StatBox label={t('advisor.roi_year')}          value={`${result.roi_percent_per_year}%`} />
+        <StatBox label={t('advisor.breakeven')}         value={`${result.breakeven_months} ${t('advisor.months_unit')}`} />
       </div>
 
       <Card>
-        <p style={{ fontSize:'12px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:'var(--space-3)', letterSpacing:'.4px' }}>COMPETITION IN YOUR AREA</p>
+        <p style={{ fontSize:'12px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:'var(--space-3)', letterSpacing:'.4px' }}>{t('chart.capital_vs_return')}</p>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--clr-border)" />
+            <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'var(--clr-text-2)' }} />
+            <YAxis tick={{ fontSize: 11, fill: 'var(--clr-text-3)' }} tickFormatter={formatTzsTick} />
+            <Tooltip formatter={(v: any) => `TZS ${Number(v).toLocaleString()}`} contentStyle={{ background: 'var(--clr-card)', border: '1px solid var(--clr-border)', borderRadius: 8, fontSize: 13 }} />
+            <Bar dataKey="value" fill="var(--clr-primary, #0D6E6E)" radius={[6, 6, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </Card>
+
+      <Card>
+        <p style={{ fontSize:'12px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:'var(--space-3)', letterSpacing:'.4px' }}>{t('advisor.competition_title')}</p>
         <p style={{ fontSize:'15px' }}>
-          There are currently <strong>{result.existing_similar_businesses_in_area}</strong> similar businesses in your ward/district.
-          {result.existing_similar_businesses_in_area < 5 ? ' Low competition — a good opportunity.' :
-           result.existing_similar_businesses_in_area < 20 ? ' Moderate competition.' :
-           ' High competition — differentiate carefully.'}
+          {t('advisor.competition_prefix')} <strong>{result.existing_similar_businesses_in_area}</strong> {t('advisor.competition_suffix')}
+          {' '}
+          {result.existing_similar_businesses_in_area < 5 ? t('advisor.competition_low') :
+           result.existing_similar_businesses_in_area < 20 ? t('advisor.competition_medium') :
+           t('advisor.competition_high')}
         </p>
       </Card>
 
@@ -629,24 +661,69 @@ function PathAResult({ result, activityLabel, fundingType }: { result: any, acti
 }
 
 function PathBResult({ result, fundingType }: { result: any, fundingType?: string }) {
+  const { t } = useLanguage()
   const fmt = (n: any) => n ? Number(n).toLocaleString() : '—'
-  const count = result.recommendations?.length || 0
+  const recs = result.recommendations || []
+  const count = recs.length
+
+  const PIE_COLORS: Record<string, string> = { High: '#2F9E44', Medium: '#E8A838', Low: '#E03131' }
+  const pieData = ['High', 'Medium', 'Low']
+    .map(cat => ({ name: t(`chart.${cat.toLowerCase()}`), key: cat, value: recs.filter((r: any) => r.success_chance === cat).length }))
+    .filter(d => d.value > 0)
+
+  const barData = recs.map((r: any, i: number) => ({
+    name: r.activity?.length > 16 ? r.activity.slice(0, 16) + '…' : r.activity,
+    profit: Number(r.expected_monthly_profit_tzs) || 0,
+  }))
+
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:'var(--space-4)' }}>
       <div>
-        <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1.4rem,3vw,1.8rem)', marginBottom:'var(--space-2)' }}>Your Recommended Business Ideas</h2>
+        <h2 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1.4rem,3vw,1.8rem)', marginBottom:'var(--space-2)' }}>{t('advisor.recommended_title')}</h2>
         <p style={{ color:'var(--clr-text-2)', fontSize:'14px' }}>
-          {count} business {count === 1 ? 'idea' : 'ideas'} ranked by profit potential and competition level in your area.
+          {count} {t('advisor.recommended_count_suffix')}
         </p>
       </div>
-      {result.recommendations?.map((rec: any, i: number) => (
+
+      {count > 1 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'var(--space-4)' }}>
+          {pieData.length > 0 && (
+            <Card>
+              <p style={{ fontSize:'12px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:'var(--space-3)', letterSpacing:'.4px' }}>{t('chart.success_distribution')}</p>
+              <ResponsiveContainer width="100%" height={200}>
+                <PieChart>
+                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label={(entry: any) => `${entry.name}: ${entry.value}`}>
+                    {pieData.map((entry, i) => <Cell key={i} fill={PIE_COLORS[entry.key] || '#888'} />)}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: 'var(--clr-card)', border: '1px solid var(--clr-border)', borderRadius: 8, fontSize: 13 }} />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          )}
+          <Card>
+            <p style={{ fontSize:'12px', color:'var(--clr-text-3)', fontWeight:700, marginBottom:'var(--space-3)', letterSpacing:'.4px' }}>{t('chart.profit_comparison')}</p>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--clr-border)" />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: 'var(--clr-text-2)' }} interval={0} angle={-25} textAnchor="end" height={50} />
+                <YAxis tick={{ fontSize: 11, fill: 'var(--clr-text-3)' }} tickFormatter={formatTzsTick} />
+                <Tooltip formatter={(v: any) => `TZS ${Number(v).toLocaleString()}`} contentStyle={{ background: 'var(--clr-card)', border: '1px solid var(--clr-border)', borderRadius: 8, fontSize: 13 }} />
+                <Bar dataKey="profit" fill="var(--clr-primary, #0D6E6E)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
+      )}
+
+      {recs.map((rec: any, i: number) => (
         <Card key={i} style={{ borderLeft:'4px solid var(--clr-primary)' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'var(--space-3)', flexWrap:'wrap', gap:8 }}>
             <div style={{ flex:1, minWidth:0 }}>
               <span style={{ fontSize:'11px', fontWeight:700, color:'var(--clr-text-3)' }}>#{i+1}</span>
               {rec.matches_your_experience && (
                 <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: 'var(--clr-primary)', letterSpacing: '.3px' }}>
-                  ★ BASED ON YOUR EXPERIENCE
+                  {t('advisor.based_on_experience')}
                 </span>
               )}
               <h3 style={{ fontFamily:'var(--font-display)', fontSize:'clamp(1rem,2.5vw,1.15rem)', margin:'2px 0', wordBreak:'break-word' }}>{rec.activity}</h3>
@@ -654,19 +731,19 @@ function PathBResult({ result, fundingType }: { result: any, fundingType?: strin
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:6, alignItems:'flex-end' }}>
               <Badge label={rec.success_chance} />
-              {fundingType === 'loan' && rec.risk_tier && <Badge label={`${rec.risk_tier} risk`} />}
+              {fundingType === 'loan' && rec.risk_tier && <Badge label={`${rec.risk_tier} ${t('advisor.risk_suffix')}`} />}
             </div>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(120px,1fr))', gap:'var(--space-2)' }}>
-            {[['Capital', `TZS ${fmt(rec.startup_capital_tzs)}`], ['Monthly Profit', `TZS ${fmt(rec.expected_monthly_profit_tzs)}`], ['ROI / year', `${rec.roi_percent_per_year}%`], ['Break-even', `${rec.breakeven_months} mo`]]
+            {[[t('advisor.capital_col'), `TZS ${fmt(rec.startup_capital_tzs)}`], [t('advisor.profit_col'), `TZS ${fmt(rec.expected_monthly_profit_tzs)}`], [t('advisor.roi_col'), `${rec.roi_percent_per_year}%`], [t('advisor.breakeven_col'), `${rec.breakeven_months} ${t('advisor.months_unit')}`]]
               .map(([l,v]) => (
                 <div key={l} style={{ background:'var(--clr-bg)', borderRadius:'var(--radius-sm)', padding:'10px 12px' }}>
-                  <div style={{ fontSize:'10px', color:'var(--clr-text-3)', fontWeight:700, letterSpacing:'.3px' }}>{l.toUpperCase()}</div>
+                  <div style={{ fontSize:'10px', color:'var(--clr-text-3)', fontWeight:700, letterSpacing:'.3px' }}>{String(l).toUpperCase()}</div>
                   <div style={{ fontWeight:700, fontSize:'14px', color:'var(--clr-text)', marginTop:2 }}>{v}</div>
                 </div>
               ))}
           </div>
-          <p style={{ fontSize:'12px', color:'var(--clr-text-3)', marginTop:'var(--space-3)' }}>{rec.existing_similar_businesses_in_area} similar businesses nearby</p>
+          <p style={{ fontSize:'12px', color:'var(--clr-text-3)', marginTop:'var(--space-3)' }}>{rec.existing_similar_businesses_in_area} {t('advisor.similar_nearby')}</p>
           {rec.warning && (
             <p style={{ fontSize:'12px', color:'var(--clr-warning)', marginTop:'var(--space-2)' }}>⚠ {rec.warning}</p>
           )}
@@ -690,6 +767,7 @@ function PathBResult({ result, fundingType }: { result: any, fundingType?: strin
 
 // ── AI Consultant panel — lazy: fetches only when the person clicks ──
 function ConsultantPanel({ payload }: { payload: any }) {
+  const { t, lang } = useLanguage()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [data, setData] = useState<any>(null)
@@ -699,36 +777,36 @@ function ConsultantPanel({ payload }: { payload: any }) {
     if (data) { setOpen(o => !o); return }
     setLoading(true); setErr('')
     try {
-      const { data: res } = await consultantAPI.analyze(payload)
+      const { data: res } = await consultantAPI.analyze({ ...payload, language: lang })
       setData(res); setOpen(true)
     } catch (e: any) {
-      setErr(e.response?.data?.error || 'AI consultant is temporarily unavailable.')
+      setErr(e.response?.data?.error || t('consultant.unavailable'))
     } finally { setLoading(false) }
   }
 
   return (
     <div style={{ marginTop: 'var(--space-3)' }}>
       <Button variant="secondary" loading={loading} onClick={explain}>
-        {open ? 'Hide explanation ▲' : 'Explain this recommendation →'}
+        {open ? t('consultant.hide') : t('consultant.explain')}
       </Button>
       {err && <Alert type="error" message={err} />}
       {open && data && (
         <div style={{ marginTop: 'var(--space-3)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
           <div>
-            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>3 MONTHS</p>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>{t('consultant.3month')}</p>
             <p style={{ fontSize:14 }}>{data.three_month_outlook}</p>
           </div>
           <div>
-            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>6 MONTHS</p>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>{t('consultant.6month')}</p>
             <p style={{ fontSize:14 }}>{data.six_month_outlook}</p>
           </div>
           <div>
-            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>12 MONTHS</p>
+            <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>{t('consultant.12month')}</p>
             <p style={{ fontSize:14 }}>{data.twelve_month_outlook}</p>
           </div>
           {data.first_30_days?.length > 0 && (
             <div>
-              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px', marginBottom:4 }}>FIRST 30 DAYS</p>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px', marginBottom:4 }}>{t('consultant.first30')}</p>
               <ol style={{ paddingLeft: 18, fontSize: 14 }}>
                 {data.first_30_days.map((step: string, i: number) => <li key={i} style={{ marginBottom: 4 }}>{step}</li>)}
               </ol>
@@ -736,13 +814,13 @@ function ConsultantPanel({ payload }: { payload: any }) {
           )}
           {data.supplier_guidance && (
             <div>
-              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>SUPPLIERS</p>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>{t('consultant.suppliers')}</p>
               <p style={{ fontSize:14 }}>{data.supplier_guidance}</p>
             </div>
           )}
           {data.risk_factors_outside_the_model?.length > 0 && (
             <div>
-              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px', marginBottom:4 }}>RISKS NOT IN THE MODEL</p>
+              <p style={{ fontSize:11, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px', marginBottom:4 }}>{t('consultant.risks')}</p>
               <ul style={{ paddingLeft: 18, fontSize: 14 }}>
                 {data.risk_factors_outside_the_model.map((r: string, i: number) => <li key={i} style={{ marginBottom: 4 }}>{r}</li>)}
               </ul>
@@ -757,17 +835,24 @@ function ConsultantPanel({ payload }: { payload: any }) {
 
 // ── Microfinance panel (loan funding path) ────────────────────────
 function MicrofinancePanel({ defaultRiskTier }: { defaultRiskTier: string }) {
+  const { t } = useLanguage()
   const [tier, setTier] = useState(defaultRiskTier || 'Medium')
   const [loading, setLoading] = useState(false)
   const [institutions, setInstitutions] = useState<any[]>([])
   const [err, setErr] = useState('')
+
+  const TIER_LABEL: Record<string, string> = {
+    Low: t('microfinance.risk_low'),
+    Medium: t('microfinance.risk_medium'),
+    High: t('microfinance.risk_high'),
+  }
 
   useEffect(() => {
     let cancelled = false
     setLoading(true); setErr('')
     microfinanceAPI.list(tier)
       .then(({ data }: any) => { if (!cancelled) setInstitutions(data.institutions || []) })
-      .catch(() => { if (!cancelled) setErr('Could not load lender options right now.') })
+      .catch(() => { if (!cancelled) setErr(t('microfinance.error')) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
   }, [tier])
@@ -775,25 +860,25 @@ function MicrofinancePanel({ defaultRiskTier }: { defaultRiskTier: string }) {
   return (
     <Card style={{ marginTop: 'var(--space-4)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginBottom: 'var(--space-3)' }}>
-        <p style={{ fontSize:12, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>LENDERS THAT MAY SUPPORT THIS</p>
+        <p style={{ fontSize:12, fontWeight:700, color:'var(--clr-text-3)', letterSpacing:'.4px' }}>{t('microfinance.title')}</p>
         <div style={{ display: 'flex', gap: 6 }}>
-          {['Low', 'Medium', 'High'].map(t => (
-            <button key={t} onClick={() => setTier(t)}
+          {['Low', 'Medium', 'High'].map(tierOption => (
+            <button key={tierOption} onClick={() => setTier(tierOption)}
               style={{
                 padding: '4px 10px', borderRadius: 999, fontSize: 12, cursor: 'pointer',
-                border: `1.5px solid ${tier === t ? 'var(--clr-primary)' : 'var(--clr-border)'}`,
-                background: tier === t ? 'var(--clr-primary-lt)' : 'var(--clr-card)',
-                color: tier === t ? 'var(--clr-primary)' : 'var(--clr-text-2)',
-                fontWeight: tier === t ? 700 : 400,
+                border: `1.5px solid ${tier === tierOption ? 'var(--clr-primary)' : 'var(--clr-border)'}`,
+                background: tier === tierOption ? 'var(--clr-primary-lt)' : 'var(--clr-card)',
+                color: tier === tierOption ? 'var(--clr-primary)' : 'var(--clr-text-2)',
+                fontWeight: tier === tierOption ? 700 : 400,
               }}
-            >{t} risk</button>
+            >{TIER_LABEL[tierOption]}</button>
           ))}
         </div>
       </div>
       {loading && <Spinner size={24} />}
       {err && <Alert type="error" message={err} />}
       {!loading && !err && institutions.length === 0 && (
-        <p style={{ fontSize: 13, color: 'var(--clr-text-3)' }}>No matching lenders found for this risk tier.</p>
+        <p style={{ fontSize: 13, color: 'var(--clr-text-3)' }}>{t('microfinance.none_found')}</p>
       )}
       {!loading && institutions.map((inst: any) => (
         <div key={inst.id} style={{ padding: '10px 0', borderTop: '1px solid var(--clr-border)' }}>
@@ -804,20 +889,20 @@ function MicrofinancePanel({ defaultRiskTier }: { defaultRiskTier: string }) {
           <p style={{ fontSize: 13, color: 'var(--clr-text-2)', marginTop: 4 }}>{inst.eligibility_summary}</p>
           {(inst.min_loan_tzs || inst.max_loan_tzs) && (
             <p style={{ fontSize: 12, color: 'var(--clr-text-3)', marginTop: 4 }}>
-              Loan range: TZS {inst.min_loan_tzs ? Number(inst.min_loan_tzs).toLocaleString() : '—'}
+              {t('microfinance.loan_range')} TZS {inst.min_loan_tzs ? Number(inst.min_loan_tzs).toLocaleString() : '—'}
               {' – '}
               {inst.max_loan_tzs ? Number(inst.max_loan_tzs).toLocaleString() : 'varies'}
             </p>
           )}
           {inst.website && (
             <a href={inst.website} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: 'var(--clr-primary)' }}>
-              Visit website →
+              {t('microfinance.visit')}
             </a>
           )}
         </div>
       ))}
       <p style={{ fontSize: 11, color: 'var(--clr-text-3)', marginTop: 'var(--space-3)', fontStyle: 'italic' }}>
-        Terms shown are general reference info from each lender's own site, not a live quote — confirm directly before applying.
+        {t('microfinance.disclaimer')}
       </p>
     </Card>
   )

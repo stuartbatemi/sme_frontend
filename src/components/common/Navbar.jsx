@@ -2,10 +2,13 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import ThemeToggle from './ThemeToggle'
+import LanguageToggle from './LanguageToggle'
 
 export default function Navbar() {
   const { user, logout } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -18,8 +21,8 @@ export default function Navbar() {
 
   const isActive = (path) => location.pathname === path
   const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/advisor', label: 'Get Advice' },
+    { to: '/', label: t('nav.home') },
+    { to: '/advisor', label: t('nav.getAdvice') },
   ]
 
   return (
@@ -51,7 +54,7 @@ export default function Navbar() {
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <button
               onClick={() => setDrawerOpen(true)}
-              aria-label="Open menu"
+              aria-label={t('nav.openMenu')}
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 width: 38, height: 38, borderRadius: '50%',
@@ -88,6 +91,7 @@ export default function Navbar() {
           {/* Col 3 — right cluster, right-aligned */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
             <ThemeToggle />
+            <LanguageToggle />
 
             {user ? (
               <button
@@ -129,7 +133,7 @@ export default function Navbar() {
                     cursor: 'pointer', whiteSpace: 'nowrap',
                     transition: 'background 0.2s ease',
                   }}
-                >Log in</button>
+                >{t('nav.login')}</button>
                 <button
                   onClick={() => navigate('/register')}
                   style={{
@@ -141,7 +145,7 @@ export default function Navbar() {
                     boxShadow: '0 4px 14px rgba(232,168,56,0.35)',
                     transition: 'filter 0.18s ease',
                   }}
-                >Sign up</button>
+                >{t('nav.signup')}</button>
               </>
             )}
           </div>
@@ -189,7 +193,7 @@ export default function Navbar() {
               </span>
               <button
                 onClick={() => setDrawerOpen(false)}
-                aria-label="Close menu"
+                aria-label={t('nav.closeMenu')}
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: 34, height: 34, borderRadius: '50%',
@@ -230,7 +234,7 @@ export default function Navbar() {
             {user ? (
               <div style={{ borderTop: '1px solid var(--navbar-clay-edge)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <p style={{ padding: '8px 16px', fontSize: 13, color: 'var(--navbar-ink-dim)' }}>
-                  Signed in as <strong style={{ color: 'var(--navbar-ink)' }}>{user.full_name}</strong>
+                  {t('nav.signedInAs')} <strong style={{ color: 'var(--navbar-ink)' }}>{user.full_name}</strong>
                 </p>
                 <button
                   onClick={handleLogout}
@@ -242,7 +246,7 @@ export default function Navbar() {
                     background: 'none', border: 'none', cursor: 'pointer', width: '100%',
                     transition: 'background 0.15s ease',
                   }}
-                >Log out</button>
+                >{t('nav.logout')}</button>
               </div>
             ) : (
               <div style={{ borderTop: '1px solid var(--navbar-clay-edge)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -250,13 +254,13 @@ export default function Navbar() {
                   display: 'block', fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 15,
                   color: 'var(--navbar-ink)', padding: '12px 16px', borderRadius: 12,
                   textDecoration: 'none', transition: 'background 0.15s ease',
-                }}>Log in</Link>
+                }}>{t('nav.login')}</Link>
                 <Link to="/register" onClick={() => setDrawerOpen(false)} style={{
                   display: 'block', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 15,
                   color: 'var(--navbar-accent)', padding: '12px 16px', borderRadius: 12,
                   textDecoration: 'none', background: 'rgba(232,168,56,0.10)',
                   transition: 'background 0.15s ease',
-                }}>Sign up</Link>
+                }}>{t('nav.signup')}</Link>
               </div>
             )}
           </aside>
