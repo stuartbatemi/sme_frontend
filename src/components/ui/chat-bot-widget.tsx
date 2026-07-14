@@ -43,7 +43,7 @@ export function ChatBotWidget({ onGetStarted }: { onGetStarted?: () => void }) {
   }
 
   return (
-    <div className="absolute bottom-6 right-6 z-20 flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {open && (
         <div className="flex h-[380px] w-[300px] flex-col overflow-hidden rounded-2xl border border-white/15 bg-neutral-900/90 shadow-2xl backdrop-blur-xl sm:w-[340px]">
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">

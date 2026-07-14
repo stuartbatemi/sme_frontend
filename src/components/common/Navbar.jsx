@@ -19,6 +19,12 @@ export default function Navbar() {
     navigate('/')
   }
 
+  async function handleSwitchAccount() {
+    await logout()
+    setDrawerOpen(false)
+    navigate('/login')
+  }
+
   const isActive = (path) => location.pathname === path
   const navLinks = [
     { to: '/', label: t('nav.home') },
@@ -236,6 +242,17 @@ export default function Navbar() {
                 <p style={{ padding: '8px 16px', fontSize: 13, color: 'var(--navbar-ink-dim)' }}>
                   {t('nav.signedInAs')} <strong style={{ color: 'var(--navbar-ink)' }}>{user.full_name}</strong>
                 </p>
+                <button
+                  onClick={handleSwitchAccount}
+                  style={{
+                    display: 'block', textAlign: 'left',
+                    fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 15,
+                    color: 'var(--navbar-ink)',
+                    padding: '12px 16px', borderRadius: 12,
+                    background: 'none', border: 'none', cursor: 'pointer', width: '100%',
+                    transition: 'background 0.15s ease',
+                  }}
+                >{t('nav.switchAccount')}</button>
                 <button
                   onClick={handleLogout}
                   style={{

@@ -1,6 +1,6 @@
 /* GIS Explorer - Premium Dark Aesthetic */
 
-:root {
+.gis-explorer-container {
   --clr-bg: #050505;
   --clr-text: #ffffff;
   --clr-accent: #C6FF59;
@@ -10,7 +10,10 @@
   --transition-ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-* {
+.gis-explorer-container,
+.gis-explorer-container *,
+.gis-explorer-container *::before,
+.gis-explorer-container *::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
