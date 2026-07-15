@@ -4,10 +4,10 @@
 
 import axios from 'axios'
 
+const RAW_API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+
 const node = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api`
-    : '/api',
+  baseURL: RAW_API_URL ? `${RAW_API_URL}/api` : '/api',
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 })
@@ -29,7 +29,7 @@ node.interceptors.response.use(
       try {
         const refresh_token = localStorage.getItem('refresh_token')
         if (!refresh_token) throw new Error('No refresh token')
-        const { data } = await axios.post('/api/auth/refresh', { refresh_token })
+        const { data } = await axios.post(`${RAW_API_URL}/api/auth/refresh`, { refresh_token })
         localStorage.setItem('access_token', data.access_token)
         original.headers.Authorization = `Bearer ${data.access_token}`
         return node(original)
@@ -80,8 +80,10 @@ export const userAPI = {
 }
 
 // ── FastAPI direct (districts + activities list) ──────────────────
+const RAW_FASTAPI_URL = (import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000').replace(/\/+$/, '')
+
 const fastapi = axios.create({
- baseURL: import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000',
+  baseURL: RAW_FASTAPI_URL,
   timeout: 10000,
 })
 

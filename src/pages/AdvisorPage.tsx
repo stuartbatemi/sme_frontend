@@ -44,7 +44,7 @@ const emptyForm: AdvisorForm = {
   path_type: '', business_idea: '', isic_detailed: null, activity_label: '',
   district: '', ward: '', village: '',
   capital_tzs: '', age: '', gender: '', top_n: 5,
-  funding_type: '', prior_experience: [], experience_preference: 'both',
+  funding_type: 'personal', prior_experience: [], experience_preference: 'both',
 }
 
 export default function AdvisorPage() {
