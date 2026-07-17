@@ -43,7 +43,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={cycle}
-      className="orin-icon-btn"
+      className="Fursa-icon-btn"
       aria-label={`Switch theme (currently ${LABEL[theme]})`}
       title={LABEL[theme]}
     >

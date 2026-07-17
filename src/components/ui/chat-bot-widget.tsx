@@ -9,7 +9,7 @@ interface ChatMessage {
 
 const INTRO: ChatMessage = {
   role: "bot",
-  text: "Habari! I'm the ORin assistant. Ask me about starting a business in Dar es Salaam — I can point you to the right path.",
+  text: "Habari! I'm the Fursa assistant. Ask me about starting a business in Dar es Salaam — I can point you to the right path.",
 }
 
 /**
@@ -48,7 +48,7 @@ export function ChatBotWidget({ onGetStarted }: { onGetStarted?: () => void }) {
         <div className="flex h-[380px] w-[300px] flex-col overflow-hidden rounded-2xl border border-white/15 bg-neutral-900/90 shadow-2xl backdrop-blur-xl sm:w-[340px]">
           <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
             <Sparkles className="h-4 w-4 text-accent" />
-            <span className="font-display text-sm font-semibold text-white">ORin Assistant</span>
+            <span className="font-display text-sm font-semibold text-white">Fursa Assistant</span>
             <button
               onClick={() => setOpen(false)}
               className="ml-auto rounded-full p-1 text-white/60 hover:bg-white/10 hover:text-white"

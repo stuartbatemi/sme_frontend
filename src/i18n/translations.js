@@ -18,7 +18,7 @@ export const translations = {
     'nav.closeMenu': 'Close menu',
 
     // ── Hero (Home page top section) ───────────────────────────
-    'hero.eyebrow': 'ORin studies 64,000+ real Dar es Salaam enterprises — and tells you in seconds whether your idea will work.',
+    'hero.eyebrow': 'Fursa studies 64,000+ real Dar es Salaam enterprises — and tells you in seconds whether your idea will work.',
     'hero.headline': 'Business Advisor',
     'hero.subline': 'for Dar es Salaam',
     'hero.body': "Find out if your business idea will succeed — or discover which business to start — based on real data across all six districts.",
@@ -213,7 +213,7 @@ export const translations = {
     'nav.closeMenu': 'Funga menyu',
 
     // ── Hero ────────────────────────────────────────────────────
-    'hero.eyebrow': 'ORin inachambua biashara halisi zaidi ya 64,000 za Dar es Salaam — na kukujibu ndani ya sekunde iwapo wazo lako litafanikiwa.',
+    'hero.eyebrow': 'Fursa inachambua biashara halisi zaidi ya 64,000 za Dar es Salaam — na kukujibu ndani ya sekunde iwapo wazo lako litafanikiwa.',
     'hero.headline': 'Mshauri wa Biashara',
     'hero.subline': 'kwa Dar es Salaam',
     'hero.body': 'Jua kama wazo lako la biashara litafanikiwa — au gundua biashara gani ya kuanzisha — kwa kutumia takwimu halisi kutoka wilaya zote sita.',

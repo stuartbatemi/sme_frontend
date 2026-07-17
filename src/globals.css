@@ -3,7 +3,7 @@
 @import "./legacy.css" layer(base);
 
 /* ============================================================
-   shadcn/ui CSS variables — mapped to ORin's existing brand
+   shadcn/ui CSS variables — mapped to Fursa's existing brand
    palette (teal primary #0D6E6E, gold accent #E8A838) so shadcn
    primitives feel native instead of using generic shadcn defaults.
    These coexist with legacy.css's --clr-* tokens used by the

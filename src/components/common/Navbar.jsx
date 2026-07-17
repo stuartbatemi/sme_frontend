@@ -91,7 +91,7 @@ export default function Navbar() {
             userSelect: 'none',
             whiteSpace: 'nowrap',
           }}>
-            ORin<span style={{ color: 'var(--navbar-accent)' }}>.</span>
+            Fursa<span style={{ color: 'var(--navbar-accent)' }}>.</span>
           </Link>
 
           {/* Col 3 — right cluster, right-aligned */}
@@ -167,7 +167,7 @@ export default function Navbar() {
               position: 'fixed', inset: 0, zIndex: 199,
               background: 'rgba(10,10,12,0.45)',
               backdropFilter: 'blur(2px)',
-              animation: 'orinFadeIn 0.18s ease both',
+              animation: 'FursaFadeIn 0.18s ease both',
             }}
           />
           <aside style={{
@@ -180,7 +180,7 @@ export default function Navbar() {
             boxShadow: 'var(--navbar-clay-shadow)',
             padding: '24px 20px',
             display: 'flex', flexDirection: 'column', gap: 4,
-            animation: 'orinSlideIn 0.22s cubic-bezier(0.16,1,0.3,1) both',
+            animation: 'FursaSlideIn 0.22s cubic-bezier(0.16,1,0.3,1) both',
           }}>
 
             {/* Drawer header */}
@@ -195,7 +195,7 @@ export default function Navbar() {
                 fontFamily: 'var(--font-wordmark)', fontSize: 18, fontWeight: 600,
                 color: 'var(--navbar-ink)', display: 'flex', alignItems: 'baseline', gap: 1,
               }}>
-                ORin<span style={{ color: 'var(--navbar-accent)' }}>.</span>
+                Fursa<span style={{ color: 'var(--navbar-accent)' }}>.</span>
               </span>
               <button
                 onClick={() => setDrawerOpen(false)}

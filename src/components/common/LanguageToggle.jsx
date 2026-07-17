@@ -21,7 +21,7 @@ export default function LanguageToggle() {
   return (
     <button
       onClick={cycle}
-      className="orin-icon-btn"
+      className="Fursa-icon-btn"
       aria-label={`${t('lang.switch')} (${FULL_LABEL[lang]})`}
       title={`${t('lang.switch')}: ${FULL_LABEL[lang]}`}
       style={{

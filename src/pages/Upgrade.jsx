@@ -10,7 +10,7 @@ const ACCENT = '#E8A838'
 const TEAL   = '#0D6E6E'
 
 const FEATURES_FREE = [
-  'Instant business viability scoring',
+  'Instant business viability scFursag',
   'Path A & Path B advice',
   'District-level analysis',
   'Based on 64,000+ real enterprises',
@@ -18,7 +18,7 @@ const FEATURES_FREE = [
 
 const FEATURES_PREMIUM = [
   'Everything in Free',
-  'Powered by ORin LoNet 2.5 — faster & sharper model',
+  'Powered by Fursa LoNet 2.5 — faster & sharper model',
   'Higher prediction accuracy',
   'Full advisory history saved',
   'Ward-level micro analysis',
@@ -77,7 +77,7 @@ export default function Upgrade() {
             Welcome to Premium!
           </h1>
           <p style={{ color: 'var(--clr-text-2)', lineHeight: 1.7, marginBottom: 32 }}>
-            You're now on <strong>ORin LoNet 2.5</strong> — our fastest, sharpest model.
+            You're now on <strong>Fursa LoNet 2.5</strong> — our fastest, sharpest model.
             Your advice just got a serious upgrade.
           </p>
           <button
@@ -237,7 +237,7 @@ export default function Upgrade() {
           </p>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem,4vw,2.6rem)',
             color: 'var(--clr-text)', lineHeight: 1.15, marginBottom: 14 }}>
-            Unlock ORin LoNet 2.5
+            Unlock Fursa LoNet 2.5
           </h1>
           <p style={{ fontSize: '1rem', color: 'var(--clr-text-2)', maxWidth: 500, margin: '0 auto' }}>
             Our fastest, sharpest model — trained on 64,000+ Dar es Salaam enterprises
@@ -358,11 +358,11 @@ export default function Upgrade() {
         }}>
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem',
             color: 'var(--clr-text)', marginBottom: 12 }}>
-            What is ORin LoNet 2.5?
+            What is Fursa LoNet 2.5?
           </h3>
           <p style={{ fontSize: '0.95rem', color: 'var(--clr-text-2)', lineHeight: 1.75,
             maxWidth: 620, margin: '0 auto' }}>
-            LoNet 2.5 is ORin's second-generation prediction model — retrained on a larger,
+            LoNet 2.5 is Fursa's second-generation prediction model — retrained on a larger,
             cleaner dataset with improved feature engineering and ensemble methods.
             It delivers faster responses, sharper probability estimates, and ward-level
             granularity that the standard model doesn't have. Premium users get every query
