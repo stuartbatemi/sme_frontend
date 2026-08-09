@@ -1,0 +1,118 @@
+
+@import "tailwindcss";
+@import "./legacy.css" layer(base);
+
+/* Hover-to-preview only makes sense with a mouse — on touch devices
+   there's no hover state to trigger it, so the panel just sits there
+   showing its empty "hover a business" placeholder, wasting space and
+   confusing the layout (it was ending up stranded below the card list
+   on narrow screens instead). Hidden below the breakpoint where the
+   business list stops having room for a side-by-side preview column.
+   Deliberately left unlayered (outside any @layer/@import layer()) so
+   it always wins over both Tailwind's utility layer and legacy.css's
+   base layer regardless of import order — layered CSS's cascade-layer
+   priority rules mean even `!important` inside a named layer can lose
+   to something in a higher-priority layer, which isn't worth relying
+   on for a rule that has to hold no matter what. */
+@media (max-width: 900px) {
+  .advisor-preview-aside {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   shadcn/ui CSS variables — mapped to Fursa's existing brand
+   palette (teal primary #0D6E6E, gold accent #E8A838) so shadcn
+   primitives feel native instead of using generic shadcn defaults.
+   These coexist with legacy.css's --clr-* tokens used by the
+   existing navbar/clay system; both are valid during migration.
+   ============================================================ */
+@theme {
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-wordmark: 'Fraunces', 'DM Serif Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --color-border: hsl(20 14% 82%);
+  --color-input: hsl(20 14% 82%);
+  --color-ring: hsl(174 82% 23%);
+  --color-background: hsl(0 0% 94%);
+  --color-foreground: hsl(0 0% 10%);
+
+  --color-primary: hsl(174 82% 23%);
+  --color-primary-foreground: hsl(0 0% 100%);
+  --color-secondary: hsl(174 45% 94%);
+  --color-secondary-foreground: hsl(174 82% 23%);
+
+  --color-accent: hsl(38 78% 58%);
+  --color-accent-foreground: hsl(38 70% 14%);
+
+  --color-destructive: hsl(0 72% 51%);
+  --color-destructive-foreground: hsl(0 0% 100%);
+
+  --color-muted: hsl(0 0% 90%);
+  --color-muted-foreground: hsl(0 0% 33%);
+
+  --color-card: hsl(0 0% 97%);
+  --color-card-foreground: hsl(0 0% 10%);
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(0 0% 10%);
+
+  --radius: 0.875rem;
+
+  --animate-spotlight: spotlight 2s ease 0.75s 1 forwards;
+
+  @keyframes spotlight {
+    0% {
+      opacity: 0;
+      transform: translate(-72%, -62%) scale(0.5);
+    }
+    100% {
+      opacity: 1;
+      transform: translate(-50%,-40%) scale(1);
+    }
+  }
+}
+
+.dark {
+  --color-border: hsl(225 18% 20%);
+  --color-input: hsl(225 18% 20%);
+  --color-background: hsl(225 25% 7%);
+  --color-foreground: hsl(220 30% 96%);
+  --color-card: hsl(228 22% 13%);
+  --color-card-foreground: hsl(220 30% 96%);
+  --color-popover: hsl(228 22% 13%);
+  --color-popover-foreground: hsl(220 30% 96%);
+  --color-muted: hsl(225 18% 16%);
+  --color-muted-foreground: hsl(220 16% 65%);
+  --color-secondary: hsl(174 30% 16%);
+  --color-secondary-foreground: hsl(174 45% 80%);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--color-background);
+    color: var(--color-foreground);
+  }
+}
+
+/* shadcn Spline loading spinner */
+.loader {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-block;
+  border-top: 3px solid var(--color-accent);
+  border-right: 3px solid transparent;
+  box-sizing: border-box;
+  animation: loader-spin 0.7s linear infinite;
+}
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}

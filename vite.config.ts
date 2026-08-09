@@ -13,7 +13,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     server: {
-      port: 3001,
+      port: 3002,
       allowedHosts: true,
       proxy: {
         '/api': { target: 'http://localhost:5000', changeOrigin: true },
@@ -21,7 +21,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __API_URL__: JSON.stringify(env.VITE_API_URL || 'http://localhost:5000'),
-      __FASTAPI_URL__: JSON.stringify(env.VITE_FASTAPI_URL || 'http://localhost:8000'),
+      __FASTAPI_URL__: JSON.stringify(env.VITE_FASTAPI_URL || 'http://localhost:8001'),
     },
   }
 })

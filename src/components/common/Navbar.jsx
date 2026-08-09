@@ -29,22 +29,27 @@ export default function Navbar() {
   const navLinks = [
     { to: '/', label: t('nav.home') },
     { to: '/advisor', label: t('nav.getAdvice') },
+    { to: '/about', label: t('nav.about') },
   ]
 
   return (
     <>
-      {/* ── Pill navbar ── */}
+      {/* ── Pill navbar — fixed (not sticky) so it never scrolls,
+          jumps, or gets clipped by an ancestor's overflow/scroll
+          context on any device. The spacer right below it reserves
+          the same space in normal flow so page content never starts
+          underneath it. ── */}
       <div style={{
-        position: 'sticky', top: 0, zIndex: 100,
+        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         padding: '10px 20px',
-        background: 'var(--clr-bg)',
+        background: 'var(--clr-bg, #0F1117)',
+        isolation: 'isolate',
         transition: 'background 0.25s ease',
       }}>
         <nav style={{
           maxWidth: 1160,
           margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
+          display: 'flex',
           alignItems: 'center',
           height: 54,
           padding: '0 8px',
@@ -56,8 +61,10 @@ export default function Navbar() {
           boxShadow: 'var(--navbar-clay-shadow), var(--navbar-clay-inset)',
         }}>
 
-          {/* Col 1 — hamburger, left-aligned */}
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          {/* Col 1 — hamburger. Content-sized (no flex-grow), so it
+              never grows or shrinks — it just takes exactly the
+              width its button needs. */}
+          <div style={{ display: 'flex', alignItems: 'center', flex: '0 0 auto' }}>
             <button
               onClick={() => setDrawerOpen(true)}
               aria-label={t('nav.openMenu')}
@@ -77,8 +84,17 @@ export default function Navbar() {
             </button>
           </div>
 
-          {/* Col 2 — wordmark, perfectly centered in grid */}
+          {/* Col 2 — wordmark. flex: 1 makes this box fill exactly
+              whatever space is left between the hamburger (fixed
+              width) and the right cluster (fixed width, varies with
+              auth state). justifyContent: 'center' then centers
+              "Fursa" within THAT leftover space specifically — not
+              the whole pill — so it always sits centered in the
+              actual visible gap, automatically, in every auth state,
+              at every screen width. No breakpoint, no fixed margin. */}
           <Link to="/" style={{
+            flex: '1 1 auto',
+            minWidth: 0,
             fontFamily: 'var(--font-wordmark)',
             fontSize: 20,
             fontWeight: 600,
@@ -86,16 +102,25 @@ export default function Navbar() {
             color: 'var(--navbar-ink)',
             display: 'flex',
             alignItems: 'baseline',
+            justifyContent: 'center',
             gap: 1,
             textDecoration: 'none',
             userSelect: 'none',
             whiteSpace: 'nowrap',
+            // Guarantees the wordmark stays readable no matter what's
+            // rendered underneath the pill (video, imagery, bright
+            // photos) — the pill background is intentionally
+            // translucent for the glass effect, so contrast can't
+            // rely on background color alone.
+            textShadow: '0 1px 6px rgba(0,0,0,0.55), 0 1px 2px rgba(0,0,0,0.35)',
           }}>
             Fursa<span style={{ color: 'var(--navbar-accent)' }}>.</span>
           </Link>
 
-          {/* Col 3 — right cluster, right-aligned */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end' }}>
+          {/* Col 3 — right cluster. Content-sized (no flex-grow), so
+              Col 2 above always knows exactly how much space is
+              genuinely left to center into. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'flex-end', flex: '0 0 auto' }}>
             <ThemeToggle />
             <LanguageToggle />
 
@@ -128,35 +153,26 @@ export default function Navbar() {
                 </span>
               </button>
             ) : (
-              <>
-                <button
-                  onClick={() => navigate('/login')}
-                  style={{
-                    padding: '8px 18px', borderRadius: 999,
-                    border: '1px solid var(--navbar-clay-edge)',
-                    background: 'transparent', color: 'var(--navbar-ink-dim)',
-                    fontFamily: 'var(--font-body)', fontSize: 13.5, fontWeight: 600,
-                    cursor: 'pointer', whiteSpace: 'nowrap',
-                    transition: 'background 0.2s ease',
-                  }}
-                >{t('nav.login')}</button>
-                <button
-                  onClick={() => navigate('/register')}
-                  style={{
-                    padding: '8px 18px', borderRadius: 999,
-                    border: '1px solid var(--navbar-accent)',
-                    background: 'var(--navbar-accent)', color: '#2A2200',
-                    fontFamily: 'var(--font-body)', fontSize: 13.5, fontWeight: 700,
-                    cursor: 'pointer', whiteSpace: 'nowrap',
-                    boxShadow: '0 4px 14px rgba(232,168,56,0.35)',
-                    transition: 'filter 0.18s ease',
-                  }}
-                >{t('nav.signup')}</button>
-              </>
+              <button
+                onClick={() => navigate('/login')}
+                style={{
+                  padding: '8px 20px', borderRadius: 999,
+                  border: '1px solid var(--navbar-accent)',
+                  background: 'var(--navbar-accent)', color: '#2A2200',
+                  fontFamily: 'var(--font-body)', fontSize: 13.5, fontWeight: 700,
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                  boxShadow: '0 4px 14px rgba(232,168,56,0.35)',
+                  transition: 'filter 0.18s ease',
+                }}
+              >{t('nav.login')}</button>
             )}
           </div>
         </nav>
       </div>
+
+      {/* Spacer — reserves the fixed navbar's exact height (10px pad
+          top + 54px nav + 10px pad bottom) in normal document flow. */}
+      <div style={{ height: 74 }} aria-hidden="true" />
 
       {/* ── Slide-in drawer ── */}
       {drawerOpen && (
@@ -238,46 +254,79 @@ export default function Navbar() {
 
             {/* Auth bottom */}
             {user ? (
-              <div style={{ borderTop: '1px solid var(--navbar-clay-edge)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                <p style={{ padding: '8px 16px', fontSize: 13, color: 'var(--navbar-ink-dim)' }}>
-                  {t('nav.signedInAs')} <strong style={{ color: 'var(--navbar-ink)' }}>{user.full_name}</strong>
-                </p>
+              <div style={{ borderTop: '1px solid var(--navbar-clay-edge)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {/* Signed-in identity chip */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 12px', borderRadius: 14,
+                  background: 'var(--navbar-clay-bg-soft)',
+                  border: '1px solid var(--navbar-clay-edge)',
+                }}>
+                  <div style={{
+                    width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'var(--font-wordmark)', fontWeight: 700, fontSize: 14,
+                    color: '#fff', background: 'var(--navbar-accent)',
+                  }}>
+                    {(user.full_name || '?').trim().charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.4px', textTransform: 'uppercase', color: 'var(--navbar-ink-dim)' }}>
+                      {t('nav.signedInAs')}
+                    </p>
+                    <p style={{
+                      fontSize: 14, fontWeight: 600, color: 'var(--navbar-ink)',
+                      whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                    }}>{user.full_name}</p>
+                  </div>
+                </div>
+
                 <button
                   onClick={handleSwitchAccount}
                   style={{
-                    display: 'block', textAlign: 'left',
+                    display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
                     fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 15,
                     color: 'var(--navbar-ink)',
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'none', border: 'none', cursor: 'pointer', width: '100%',
-                    transition: 'background 0.15s ease',
+                    padding: '11px 16px', borderRadius: 12,
+                    background: 'transparent', border: '1px solid var(--navbar-clay-edge)',
+                    cursor: 'pointer', width: '100%',
+                    transition: 'background 0.15s ease, border-color 0.15s ease',
                   }}
-                >{t('nav.switchAccount')}</button>
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M17 1l4 4-4 4M3 11V9a4 4 0 014-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 01-4 4H3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {t('nav.switchAccount')}
+                </button>
                 <button
                   onClick={handleLogout}
                   style={{
-                    display: 'block', textAlign: 'left',
+                    display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left',
                     fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 15,
                     color: 'var(--clr-danger)',
-                    padding: '12px 16px', borderRadius: 12,
-                    background: 'none', border: 'none', cursor: 'pointer', width: '100%',
+                    padding: '11px 16px', borderRadius: 12,
+                    background: 'transparent', border: '1px solid transparent', cursor: 'pointer', width: '100%',
                     transition: 'background 0.15s ease',
                   }}
-                >{t('nav.logout')}</button>
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(224,49,49,0.10)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                  {t('nav.logout')}
+                </button>
               </div>
             ) : (
               <div style={{ borderTop: '1px solid var(--navbar-clay-edge)', paddingTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <Link to="/login" onClick={() => setDrawerOpen(false)} style={{
-                  display: 'block', fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 15,
-                  color: 'var(--navbar-ink)', padding: '12px 16px', borderRadius: 12,
-                  textDecoration: 'none', transition: 'background 0.15s ease',
-                }}>{t('nav.login')}</Link>
-                <Link to="/register" onClick={() => setDrawerOpen(false)} style={{
                   display: 'block', fontFamily: 'var(--font-body)', fontWeight: 700, fontSize: 15,
                   color: 'var(--navbar-accent)', padding: '12px 16px', borderRadius: 12,
                   textDecoration: 'none', background: 'rgba(232,168,56,0.10)',
                   transition: 'background 0.15s ease',
-                }}>{t('nav.signup')}</Link>
+                }}>{t('nav.login')}</Link>
               </div>
             )}
           </aside>

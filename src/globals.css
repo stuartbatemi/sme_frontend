@@ -1,6 +1,23 @@
-
 @import "tailwindcss";
 @import "./legacy.css" layer(base);
+
+/* Hover-to-preview only makes sense with a mouse — on touch devices
+   there's no hover state to trigger it, so the panel just sits there
+   showing its empty "hover a business" placeholder, wasting space and
+   confusing the layout (it was ending up stranded below the card list
+   on narrow screens instead). Hidden below the breakpoint where the
+   business list stops having room for a side-by-side preview column.
+   Deliberately left unlayered (outside any @layer/@import layer()) so
+   it always wins over both Tailwind's utility layer and legacy.css's
+   base layer regardless of import order — layered CSS's cascade-layer
+   priority rules mean even `!important` inside a named layer can lose
+   to something in a higher-priority layer, which isn't worth relying
+   on for a rule that has to hold no matter what. */
+@media (max-width: 900px) {
+  .advisor-preview-aside {
+    display: none !important;
+  }
+}
 
 /* ============================================================
    shadcn/ui CSS variables — mapped to Fursa's existing brand
@@ -74,6 +91,9 @@
 @layer base {
   * {
     border-color: var(--color-border);
+  }
+  html {
+    scroll-behavior: smooth;
   }
   body {
     background: var(--color-background);
