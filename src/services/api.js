@@ -86,19 +86,18 @@ export const userAPI = {
   stats:   ()     => node.get('/user/stats'),
 }
 
-// ── FastAPI direct (districts + activities list) ──────────────────
-const RAW_FASTAPI_URL = (import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000').replace(/\/+$/, '')
-
-const fastapi = axios.create({
-  baseURL: RAW_FASTAPI_URL,
-  timeout: 10000,
-})
-
+// ── Model reference data (districts, sectors, skills, hobbies,
+// activities) — proxied through the Node backend (see routes/advisory.js),
+// NOT called directly from the browser. Calling FastAPI directly from
+// the client would require it to be publicly reachable with CORS
+// configured for this origin, and would leak its URL; the Node proxy
+// already exists, is cached server-side, and keeps the model service
+// private.
 export const modelAPI = {
-  districts:  () => fastapi.get('/districts'),
-  sectors:    (lang = 'en') => fastapi.get('/sectors', { params: { lang } }),
-  skills:     (lang = 'en') => fastapi.get('/skills', { params: { lang } }),
-  hobbies:    (lang = 'en') => fastapi.get('/hobbies', { params: { lang } }),
+  districts:  () => node.get('/advisory/districts'),
+  sectors:    (lang = 'en') => node.get('/advisory/sectors', { params: { lang } }),
+  skills:     (lang = 'en') => node.get('/advisory/skills', { params: { lang } }),
+  hobbies:    (lang = 'en') => node.get('/advisory/hobbies', { params: { lang } }),
   activities: (sector, lang = 'en') =>
-    fastapi.get('/activities', { params: { ...(sector ? { sector } : {}), lang } }),
+    node.get('/advisory/activities', { params: { ...(sector ? { sector } : {}), lang } }),
 }

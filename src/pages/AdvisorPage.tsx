@@ -253,7 +253,7 @@ export default function AdvisorPage() {
         );
     } catch {
       setError(
-        "Could not reach the model server. Make sure it is running on port 8000.",
+        "Something went wrong loading business ideas. Please try again in a moment.",
       );
     } finally {
       setSearching(false);
