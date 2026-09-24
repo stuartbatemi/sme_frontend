@@ -9,7 +9,7 @@ interface ChatMessage {
 
 const INTRO: ChatMessage = {
   role: "bot",
-  text: "Habari! I'm the Fursa assistant. Ask me about starting a business in Dar es Salaam — I can point you to the right path.",
+  text: "Habari! I'm the Fursa assistant. Ask me about starting a business in Dar es Salaam, I can recommend ideas.",
 }
 
 /**
@@ -36,7 +36,7 @@ export function ChatBotWidget({ onGetStarted }: { onGetStarted?: () => void }) {
       { role: "user", text },
       {
         role: "bot",
-        text: "I'm a simple guide for now — sign up free and get a real, data-backed answer in seconds. Click \"Get Free Advice\" above to start!",
+        text: "I'm a simple guide for now, sign up free and get a real, data-backed answer in seconds. Click \"Get Free Advice\" above to start!",
       },
     ])
     setInput("")
